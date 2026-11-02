@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AppGym</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B7A5F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AppGym">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<div class="wrap">
+  <header><h1 id="appn">AppGym</h1><div class="today" id="today"></div></header>
+  <nav class="tabs" id="tabs" aria-label="Treinos"></nav>
+  <div id="newday"></div>
+  <main id="main"></main>
+  <p class="foot" id="foot">Os registros ficam salvos neste navegador. Salvar de novo no mesmo dia atualiza o registro daquele exercício.</p>
+</div>
+<nav class="bar" id="bar" aria-label="Seções"></nav>
+<div id="rt" class="rt" hidden></div>
+<div id="ov"></div>
+<input type="file" id="bkp" accept="application/json,.json" hidden>
+<input type="file" id="file" accept="image/*" multiple hidden>
+<script src="config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
