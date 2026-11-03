@@ -200,7 +200,7 @@ function applyCfg() {
   r.dataset.font = c.font; r.dataset.lay = 'cards'; r.dataset.den = 'cozy';
   document.getElementById('appn').textContent = c.name || 'AppGym';
   document.title = c.name || 'AppGym';
-  document.getElementById('foot').textContent = sbOn() ? 'Sincronizado com a nuvem pelo código do casal. As fotos ficam só neste aparelho.' : 'Os registros ficam salvos neste navegador. Para usar em dois aparelhos, ative a sincronização em Estilo.';
+  document.getElementById('foot').textContent = sbOn() ? 'Sincronizado com a nuvem pelo código. As fotos ficam só neste aparelho.' : 'Os registros ficam salvos neste navegador. Para usar em dois aparelhos, ative a sincronização em Estilo.';
 }
 
 function renderBar() {
