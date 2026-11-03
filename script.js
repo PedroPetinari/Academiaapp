@@ -259,7 +259,7 @@ function viewStyle() {
   <div class="row"><label style="flex:1">Nome da pessoa 1<input id="cn1" value="${esc(c.n1)}" maxlength="14"></label><label style="flex:1">Nome da pessoa 2<input id="cn2" value="${esc(c.n2)}" maxlength="14"></label></div>
   <div class="row"><span>Descanso automático</span>${seg('rest', [['0', 'Off'], ['60', '60s'], ['90', '90s'], ['120', '120s']])}</div>
   <div class="row"><span>Meta semanal</span>${seg('goal', [['3', '3×'], ['4', '4×'], ['5', '5×'], ['6', '6×']])}</div>
-  <div class="row"><label style="flex:1">Código do casal (sincronização)<input id="ccode" value="${esc(c.code || '')}" placeholder="ex.: pedro-brenda-k39x2m" autocapitalize="off" autocomplete="off"></label></div>
+  <div class="row"><label style="flex:1">código (sincronização)<input id="ccode" value="${esc(c.code || '')}" placeholder="ex.: pedro-brenda-k39x2m" autocapitalize="off" autocomplete="off"></label></div>
   <p class="dv" id="cmsg">${cloudMsg()}</p>
   <div class="row"><button class="save" data-act="sync">Sincronizar agora</button><button class="save" data-act="export">Exportar backup</button><button class="save" data-act="import">Importar backup</button></div>
   <p class="dv">${dataMsg}</p>
