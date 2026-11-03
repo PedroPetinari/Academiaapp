@@ -182,6 +182,7 @@ document.addEventListener('keydown', ev => {
   if (ev.key !== 'Enter') return;
   const id = ev.target.id;
   if (id === 'ndn') document.querySelector('[data-act="mkday"]').click();
+  if (id === 'ccode') { S.cfg.code = ev.target.value.trim(); saveLocal(); SB.status = 'Sincronizando...'; syncNow(); }
   if (id === 'nn' || id === 'nt') document.querySelector('[data-act="addex"]').click();
 });
 
@@ -258,8 +259,8 @@ function viewStyle() {
   <div class="row"><label style="flex:1">Nome da pessoa 1<input id="cn1" value="${esc(c.n1)}" maxlength="14"></label><label style="flex:1">Nome da pessoa 2<input id="cn2" value="${esc(c.n2)}" maxlength="14"></label></div>
   <div class="row"><span>Descanso automático</span>${seg('rest', [['0', 'Off'], ['60', '60s'], ['90', '90s'], ['120', '120s']])}</div>
   <div class="row"><span>Meta semanal</span>${seg('goal', [['3', '3×'], ['4', '4×'], ['5', '5×'], ['6', '6×']])}</div>
-  <div class="row"><label style="flex:1">Código(sincronização)<input id="ccode" value="${esc(c.code || '')}" placeholder="ex.: pedro-brenda-k39x2m" autocapitalize="off" autocomplete="off"></label></div>
-  <p class="dv">${cloudMsg()}</p>
+  <div class="row"><label style="flex:1">Código do casal (sincronização)<input id="ccode" value="${esc(c.code || '')}" placeholder="ex.: pedro-brenda-k39x2m" autocapitalize="off" autocomplete="off"></label></div>
+  <p class="dv" id="cmsg">${cloudMsg()}</p>
   <div class="row"><button class="save" data-act="sync">Sincronizar agora</button><button class="save" data-act="export">Exportar backup</button><button class="save" data-act="import">Importar backup</button></div>
   <p class="dv">${dataMsg}</p>
   <button class="lnk" data-act="reset">Restaurar padrão</button></div>`;
@@ -269,6 +270,7 @@ document.addEventListener('input', ev => {
   const i = ev.target.id;
   if (i === 'cname') { S.cfg.name = ev.target.value; applyCfg(); persist(); }
   if (i === 'ccol') { S.cfg.acc = ev.target.value; applyCfg(); persist(); }
+  if (i === 'ccode') { S.cfg.code = ev.target.value.trim(); saveLocal(); const m = document.getElementById('cmsg'); if (m) m.textContent = cloudMsg(); }
   if (i === 'cn1') { S.cfg.n1 = ev.target.value; persist(); }
   if (i === 'cn2') { S.cfg.n2 = ev.target.value; persist(); }
 });
@@ -375,7 +377,7 @@ const CFG = window.APPGYM_CONFIG || {};
 const SB = { busy: false, status: '', timer: null };
 const sbOn = () => !!(CFG.supabaseUrl && CFG.supabaseKey && (S.cfg.code || '').length >= 8);
 async function rpc(fn, body) {
-  const r = await fetch(CFG.supabaseUrl.replace(/\/$/, '') + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: CFG.supabaseKey, Authorization: 'Bearer ' + CFG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const r = await fetch(CFG.supabaseUrl.replace(/\/$/, '') + '/rest/v1/rpc/' + fn, { method: 'POST', headers: Object.assign({ apikey: CFG.supabaseKey, 'Content-Type': 'application/json' }, CFG.supabaseKey.indexOf('eyJ') === 0 ? { Authorization: 'Bearer ' + CFG.supabaseKey } : {}), body: JSON.stringify(body) });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const t = await r.text(); return t ? JSON.parse(t) : null;
 }
@@ -390,7 +392,7 @@ async function syncNow() {
     if (stable(m) !== stable(remote)) await rpc('save_casal', { p_code: S.cfg.code, p_data: m });
     SB.status = 'Sincronizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   } catch (e) { SB.status = 'Não consegui falar com a nuvem (' + e.message + ').'; }
-  SB.busy = false; softRender();
+  SB.busy = false; const cmsg = document.getElementById('cmsg'); if (cmsg) cmsg.textContent = cloudMsg(); softRender();
 }
 function cloudMsg() {
   if (!(CFG.supabaseUrl && CFG.supabaseKey)) return 'Sincronização desligada: preencha o config.js com os dados do Supabase. As fotos nunca sincronizam.';
