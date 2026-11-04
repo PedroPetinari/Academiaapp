@@ -1,5 +1,5 @@
-const V = 'appgym-v2';
-const FILES = ['./', 'index.html', 'style.css', 'script.js', 'config.js', 'manifest.json', 'icon-192.png', 'icon-512.png'];
+const V = 'appgym-v4';
+const FILES = ['./', 'index.html', 'style.css', 'config.js', 'manifest.json', 'icon-192.png', 'icon-512.png'].concat(['js/util.js', 'js/state.js', 'js/workout.js', 'js/storage.js', 'js/art.js', 'js/emblems.js', 'js/themes.js', 'js/sync.js', 'js/extras.js', 'js/views.js', 'js/events.js', 'js/main.js']);
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });

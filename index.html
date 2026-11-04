@@ -15,10 +15,12 @@
 </head>
 <body>
 <div id="bgfx"></div>
+<div id="bgemb"></div>
 <div class="wrap">
   <header><h1 id="appn">AppGym</h1><div class="today" id="today"></div></header>
   <nav class="tabs" id="tabs" aria-label="Treinos"></nav>
   <div id="newday"></div>
+  <div id="run" class="run" hidden></div>
   <main id="main"></main>
   <p class="foot" id="foot">Os registros ficam salvos neste navegador. Salvar de novo no mesmo dia atualiza o registro daquele exercício.</p>
 </div>
@@ -27,8 +29,21 @@
 <div id="ov"></div>
 <input type="file" id="bkp" accept="application/json,.json" hidden>
 <input type="file" id="bgfile" accept="image/*" hidden>
+<input type="file" id="embfile" accept="image/*" hidden>
+<input type="file" id="ptfile" accept="image/*" hidden>
 <input type="file" id="file" accept="image/*" multiple hidden>
 <script src="config.js"></script>
-<script src="script.js"></script>
+<script src="js/util.js"></script>
+<script src="js/state.js"></script>
+<script src="js/workout.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/art.js"></script>
+<script src="js/emblems.js"></script>
+<script src="js/themes.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/extras.js"></script>
+<script src="js/views.js"></script>
+<script src="js/events.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
