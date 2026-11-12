@@ -5,8 +5,8 @@ document.addEventListener('click', ev => {
   const act = b.dataset.act, prev = conf; conf = null;
   const day = S.days.find(d => d.id === S.active);
   const art = b.closest('[data-id]'), ex = day && art ? day.ex.find(e => e.id === art.dataset.id) : null;
-  const t = todayStr();
-  if (act === 'tab') { S.active = b.dataset.id; }
+  const t = curDate();
+  if (act === 'tab') { if (workCtx) notice = 'Termine ou cancele a edição para trocar de treino.'; else S.active = b.dataset.id; }
   else if (act === 'newday') { showNew = true; }
   else if (act === 'nav') { view = b.dataset.v; openP = null; showNew = false; justSaved = ''; }
   else if (act === 'usekg') { const pe = b.dataset.p === 'b' ? 'b' : 'a', k = ex.id + (pe === 'b' ? 'b' : ''), dr = drafts[k]; if (dr) { dr.kg = b.dataset.kg; touched[k] = true; } }
@@ -36,12 +36,20 @@ document.addEventListener('click', ev => {
   else if (act === 'import') { document.getElementById('bkp').click(); return; }
   else if (act === 'copy') { copySess(b.dataset.sid); }
   else if (act === 'who') { who = b.dataset.v; }
-  else if (act === 'finish' || act === 'runend') {
-    if (!finishWorkout()) {
-      if (act === 'runend') { if (prev === 'endrun') S.run = null; else { runMsg = 'Nada preenchido ainda. Toque em Encerrar de novo para parar o cronômetro sem salvar.'; conf = 'endrun'; } }
-      else notice = 'Preencha ao menos um exercício (carga, séries e reps) para salvar o treino.';
-    }
-  }
+  else if (act === 'finish' || act === 'runend') { if (hasWork()) askEnd = act; else doFinish(act, prev); }
+  else if (act === 'askno') { askEnd = null; }
+  else if (act === 'askyes') { const a = askEnd || 'finish'; askEnd = null; doFinish(a, prev); }
+  else if (act === 'hedit' || act === 'hresume') { startEdit(b.dataset.sid, act === 'hresume'); }
+  else if (act === 'editcancel') { cancelEdit(); }
+  else if (act === 'bmet') { bodyMetric = b.dataset.k; }
+  else if (act === 'bsave') { bodyMsg = bodySave(who) ? 'Salvo em ' + fd(bodyDate) + '.' : 'Preencha o peso ou alguma medida.'; }
+  else if (act === 'bdel') { const d = b.dataset.d; if (prev === 'g' + d) bodyDel(who, d); else conf = 'g' + d; }
+  else if (act === 'cheerx') { cheer = null; }
+  else if (act === 'cheerdemo') { cheerDemo(); }
+  else if (act === 'rxas') { rxAs = b.dataset.v; }
+  else if (act === 'rxe') { const mine = rxList(who, b.dataset.sid).find(r => r.by === rxBy()); rxSet(who, b.dataset.sid, rxBy(), { e: mine && mine.e === b.dataset.e ? '' : b.dataset.e }); }
+  else if (act === 'rxsend') { const inp = b.closest('.rxc').querySelector('input'); rxSet(who, b.dataset.sid, rxBy(), { c: inp.value.trim() }); }
+  else if (act === 'notif') { try { Notification.requestPermission().then(() => render()); } catch (e) {} return; }
   else if (act === 'runstart') { S.run = { at: Date.now() }; }
   else if (act === 'ptpick') { ptSlot = +b.dataset.i; document.getElementById('ptfile').click(); return; }
   else if (act === 'ptuse') { const t = (S.cfg.pt || [])[+b.dataset.i]; if (t && t.id) { S.cfg.bgType = 'photo'; S.cfg.bgVal = t.id; if (t.acc) { S.cfg.acc = t.acc; delete S.cfg.accT; } } }
@@ -91,7 +99,9 @@ document.addEventListener('input', ev => {
 });
 
 document.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape' && askEnd) { askEnd = null; render(); return; }
   if (ev.key !== 'Enter') return;
+  if (ev.target.classList && ev.target.classList.contains('rxin')) { ev.target.closest('.rxc').querySelector('[data-act="rxsend"]').click(); return; }
   const id = ev.target.id;
   if (id === 'ndn') document.querySelector('[data-act="mkday"]').click();
   if (id === 'ccode') { S.cfg.code = ev.target.value.trim(); saveLocal(); SB.status = 'Sincronizando...'; syncNow(); }
@@ -105,6 +115,7 @@ document.addEventListener('input', ev => {
   if (i === 'ccol') { S.cfg.acc = ev.target.value; delete S.cfg.accT; applyCfg(); persist(); }
   if (i === 'cbg') { S.cfg.bgType = 'solid'; S.cfg.bgVal = ev.target.value; applyCfg(); saveLocal(); }
   if (i === 'ccode') { S.cfg.code = ev.target.value.trim(); saveLocal(); const m = document.getElementById('cmsg'); if (m) m.textContent = cloudMsg(); }
+  if (i === 'bh') { bodySetH(who, ev.target.value); persist(); }
   if (i === 'cn1') { S.cfg.n1 = ev.target.value; persist(); }
   if (i === 'cn2') { S.cfg.n2 = ev.target.value; persist(); }
   if (i && i.slice(0, 3) === 'ptn') { const t = (S.cfg.pt || [])[+i.slice(3)]; if (t) { t.n = ev.target.value; saveLocal(); } }
@@ -113,6 +124,9 @@ document.addEventListener('input', ev => {
 document.addEventListener('change', async ev => {
   const i = ev.target.id;
   if (i === 'ccode') { S.cfg.code = ev.target.value.trim(); saveLocal(); SB.status = ''; syncNow(); softRender(); }
+  if (i === 'bd') { bodyDate = ev.target.value || todayStr(); bodyMsg = ''; render(); }
+  if (i === 'bex') { bodyEx = ev.target.value; render(); }
+  if (i === 'bh') { render(); }
   if (i === 'bgfile') {
     const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
     try { const blob = await shrink(f, 1400), id = uid(); await tx('readwrite', s => s.put({ id, blob }), 'bg'); bgUrls[id] = URL.createObjectURL(blob); S.cfg.bgType = 'photo'; S.cfg.bgVal = id; saveLocal(); render(); } catch (e) {}

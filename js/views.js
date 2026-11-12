@@ -10,7 +10,7 @@ function editForm(e, chk) {
     <div class="full1 btns"><button class="save" data-act="saveex">Salvar</button><button class="lnk" data-act="cancelex">Cancelar</button></div></div>`;
 }
 function row(e) {
-  const t = todayStr(), ed = editEx === e.id;
+  const t = curDate(), ed = editEx === e.id;
   const tools = `<div class="acts2"><button class="lnk" data-act="editex">Editar</button><button class="lnk ${conf === e.id ? 'sure' : ''}" data-act="delex">${conf === e.id ? 'Confirmar remoção' : 'Remover'}</button></div>`;
   if (S.cur.check) {
     if (ed) return `<div class="ex" data-id="${e.id}">${editForm(e, true)}</div>`;
@@ -37,11 +37,11 @@ function row(e) {
 }
 
 function render() {
-  applyCfg(); renderBar(); renderOv(); rtShow(); runDraw();
+  applyCfg(); renderBar(); renderOv(); renderCheer(); renderAsk(); rtShow(); runDraw();
   const tb = document.getElementById('tabs'), nd = document.getElementById('newday');
   tb.hidden = nd.hidden = view !== 'treino';
-  if (view !== 'treino') { document.getElementById('main').innerHTML = view === 'cal' ? viewCal() : view === 'hist' ? viewHist() : view === 'fotos' ? viewPhotos() : viewStyle(); document.querySelectorAll('[data-bg]').forEach(b => { b.style.background = b.dataset.bg; }); document.querySelectorAll('[data-th]').forEach(b => { const k = b.dataset.th, dk = wantDark(); b.style.background = thumbBg(k); b.style.color = dk ? '#fff' : THEMES[k].l.ink; b.style.textShadow = dk ? '' : 'none'; }); document.querySelectorAll('[data-ph]').forEach(b => { const u = bgUrls[b.dataset.ph]; if (u) b.style.background = 'url(' + u + ') center top/cover'; else loadBg(b.dataset.ph); }); return; }
-  const t = todayStr();
+  if (view !== 'treino') { document.getElementById('main').innerHTML = view === 'cal' ? viewCal() : view === 'corpo' ? viewBody() : view === 'hist' ? viewHist() : view === 'fotos' ? viewPhotos() : viewStyle(); document.querySelectorAll('[data-bg]').forEach(b => { b.style.background = b.dataset.bg; }); document.querySelectorAll('[data-th]').forEach(b => { const k = b.dataset.th, dk = wantDark(); b.style.background = thumbBg(k); b.style.color = dk ? '#fff' : THEMES[k].l.ink; b.style.textShadow = dk ? '' : 'none'; }); document.querySelectorAll('[data-ph]').forEach(b => { const u = bgUrls[b.dataset.ph]; if (u) b.style.background = 'url(' + u + ') center top/cover'; else loadBg(b.dataset.ph); }); return; }
+  const t = curDate();
   let day = S.days.find(d => d.id === S.active) || S.days[0];
   S.active = day ? day.id : null;
   S.cur = day || {};
@@ -54,14 +54,15 @@ function render() {
   if (!day) { main.innerHTML = '<p class="empty">Nenhum treino ainda. Toque em “+ Treino” para criar o primeiro.</p>'; return; }
   const nt = notice; notice = '';
   const dv = day.check ? '' : `<p class="dv">Volume de hoje neste treino: ${esc(N('a'))} ${fmt(dayVol(day, t, 'a'))} kg · ${esc(N('b'))} ${fmt(dayVol(day, t, 'b'))} kg</p>`;
-  main.innerHTML = `<div class="dayhead"><h2>${esc(day.name)}</h2><button class="lnk ${conf === day.id ? 'sure' : ''}" data-act="delday">${conf === day.id ? 'Confirmar remoção do treino' : 'Remover treino'}</button></div>${dv}
+  const eb = workCtx ? `<div class="editbar"><span>${workCtx.resumed ? '▶ Retomando' : '✏️ Editando'}: <b>${esc(day.name)}</b> · ${fd(workCtx.d)} · ${esc(N(workCtx.who))}</span><button class="lnk" data-act="editcancel">Cancelar</button></div>` : '';
+  main.innerHTML = `${eb}<div class="dayhead"><h2>${esc(day.name)}</h2><button class="lnk ${conf === day.id ? 'sure' : ''}" data-act="delday">${conf === day.id ? 'Confirmar remoção do treino' : 'Remover treino'}</button></div>${dv}
   ${day.ex.length ? day.ex.map(row).join('') : '<p class="empty">Este treino está vazio. Adicione um exercício abaixo.</p>'}
-  ${day.check ? '' : `${nt ? `<p class="notice" role="status">${nt}</p>` : ''}<button class="save wide fin" data-act="finish">${S.run ? 'Encerrar treino' : 'Salvar treino'}</button>`}
+  ${day.check ? '' : `${nt ? `<p class="notice" role="status">${nt}</p>` : ''}<button class="save wide fin" data-act="finish">${S.run ? 'Encerrar treino' : workCtx ? 'Salvar alterações' : 'Salvar treino'}</button>`}
   <div class="add-ex"><input id="nn" placeholder="${day.check ? 'Novo item' : 'Novo exercício'}" maxlength="60"><input id="nt" placeholder="${day.check ? 'Tempo ou reps' : 'Ex.: 3×10'}" maxlength="24"><button data-act="addex">Adicionar</button></div>`;
 }
 
 function renderBar() {
-  document.getElementById('bar').innerHTML = [['treino', '🏋️', 'Treino'], ['hist', '📖', 'Histórico'], ['cal', '📅', 'Calendário'], ['fotos', '📷', 'Fotos'], ['estilo', '🎨', 'Estilo']]
+  document.getElementById('bar').innerHTML = [['treino', '🏋️', 'Treino'], ['hist', '📖', 'Histórico'], ['cal', '📅', 'Calendário'], ['corpo', '📏', 'Corpo'], ['fotos', '📷', 'Fotos'], ['estilo', '🎨', 'Estilo']]
     .map(([v, i, l]) => `<button class="${view === v ? 'on' : ''}" data-act="nav" data-v="${v}"><span>${i}</span>${l}</button>`).join('');
 }
 
@@ -114,6 +115,7 @@ function viewStyle() {
   <div class="row col"><span>Meus temas salvos</span><div class="chips">${(c.saved || []).map((t, i) => `<span class="chip"><button data-act="applytheme" data-i="${i}">${esc(t.n)}</button><button data-act="deltheme" data-i="${i}" aria-label="Apagar tema">✕</button></span>`).join('') || '<span class="dv">Nenhum ainda.</span>'}</div><div class="btnrow"><input id="tname" placeholder="Nome do tema" maxlength="20"><button class="save" data-act="savetheme">Salvar tema atual</button></div></div>
   <div class="row"><span>Fonte</span>${seg('font', [['cond', 'Condensada'], ['mod', 'Moderna'], ['serif', 'Clássica']])}</div>
   <div class="row"><label style="flex:1">Nome da pessoa 1<input id="cn1" value="${esc(c.n1)}" maxlength="14"></label><label style="flex:1">Nome da pessoa 2<input id="cn2" value="${esc(c.n2)}" maxlength="14"></label></div>
+  <div class="row"><button class="save" data-act="notif">Ativar Notificações</button><span class="dv">${notifState()}</span></div>
   <div class="row"><span>Descanso automático</span>${seg('rest', [['0', 'Off'], ['60', '60s'], ['90', '90s'], ['120', '120s']])}</div>
   <div class="row"><span>Meta semanal</span>${seg('goal', [['3', '3×'], ['4', '4×'], ['5', '5×'], ['6', '6×']])}</div>
   <div class="row"><label style="flex:1">Código (sincronização)<span class="pw"><input id="ccode" type="password" value="${esc(c.code || '')}" placeholder="Digite o código" autocapitalize="off" autocomplete="new-password"><button class="eye" data-act="eye" aria-label="Mostrar ou ocultar o código">👁</button></span></label></div>
@@ -125,7 +127,7 @@ function viewStyle() {
 
 function viewHist() {
   const all = SS(who), ss = all.slice().reverse();
-  const head = `<div class="dayhead"><h2>Histórico</h2></div>${whoSeg()}<p class="dv">${ss.length} treino${ss.length === 1 ? '' : 's'} salvo${ss.length === 1 ? '' : 's'}</p>`;
+  const head = `<div class="dayhead"><h2>Histórico</h2></div>${whoSeg()}<p class="dv">${ss.length} treino${ss.length === 1 ? '' : 's'} salvo${ss.length === 1 ? '' : 's'}</p>${histMsg ? `<p class="notice" role="status">${esc(histMsg)}</p>` : ''}`;
   if (!ss.length) return head + '<p class="empty">Nada salvo ainda. Faça um treino e toque em “Salvar treino”.</p>';
   return head + ss.map(x => {
     const vol = x.items.reduce((a, i) => a + ev(i), 0);
@@ -134,10 +136,13 @@ function viewHist() {
     const dl = prev && pv > 0 ? ` · <span class="dl">${vol >= pv ? '+' : '−'}${fmt(Math.abs(vol - pv))} kg vs. anterior</span>` : '';
     const dt = new Date(x.d + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
     const c = conf === 's' + x.id;
+    const rcs = x.items.map(i => { const r = recordOf(i, all.filter(y => y.day === x.day && y.d < x.d).map(y => y.items.find(z => z.n === i.n)).filter(Boolean)); return r && Object.assign({ n: i.n }, r); }).filter(Boolean);
     return `<article class="ss"><div class="sh"><b>${esc(x.day)}</b><span>${x.id === justSaved ? 'Salvo agora' : fd(x.d)}</span></div>
       <p class="meta">${dt} · ${fmt(vol)} kg de volume${x.dur ? ' · ⏱ ' + fmtDur(x.dur) : ''}${dl}</p>
+      ${rcs.length ? `<p class="rcl">🏆 Recordes: ${rcs.map(r => esc(recLabel(r))).join(' · ')}</p>` : ''}
       <ul class="ll">${x.items.map(i => `<li><span>${esc(i.n)}</span><span>${fxs(i)}</span></li>`).join('')}</ul>
-      <div class="acts2"><button class="lnk" data-act="copy" data-sid="${x.id}">${copied === x.id ? 'Copiado!' : 'Copiar resumo'}</button><a class="lnk" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(sumText(x))}">WhatsApp</a><button class="lnk ${c ? 'sure' : ''}" data-act="dels" data-sid="${x.id}">${c ? 'Confirmar exclusão' : 'Excluir do histórico'}</button></div></article>`;
+      ${rxHtml(x)}
+      <div class="acts2"><button class="lnk" data-act="hedit" data-sid="${x.id}">✏️ Editar</button><button class="lnk" data-act="hresume" data-sid="${x.id}">▶ Retomar</button><button class="lnk" data-act="copy" data-sid="${x.id}">${copied === x.id ? 'Copiado!' : 'Copiar resumo'}</button><a class="lnk" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(sumText(x))}">WhatsApp</a><button class="lnk ${c ? 'sure' : ''}" data-act="dels" data-sid="${x.id}">${c ? 'Confirmar exclusão' : 'Excluir do histórico'}</button></div></article>`;
   }).join('');
 }
 

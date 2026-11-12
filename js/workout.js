@@ -16,7 +16,7 @@ const draft = (e, p) => {
   const k = e.id + (p === 'b' ? 'b' : '');
   if (!drafts[k]) {
     /* a carga só vem preenchida enquanto há treino em andamento e já houve registro hoje; fora disso começa zerada */
-    const l = LG(e, p).slice(-1)[0], keep = !!(l && S.run && l.d === todayStr());
+    const l = LG(e, p).slice(-1)[0], keep = !!(l && S.run && l.d === curDate());
     drafts[k] = l ? { kg: keep ? l.kg : '', s: l.s, r: l.r, x: (l.x || []).map(o => ({ kg: keep ? o.kg : '', r: o.r })) } : { kg: '', s: parseInt(e.t) || 3, r: firstRep(e.t), x: [] };
   }
   return drafts[k];
@@ -50,25 +50,28 @@ const fmtDur = s => { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) 
 /* Encerra o treino: grava o que foi preenchido, guarda o tempo, marca o calendário e zera as cargas.
    Devolve false se não havia nada para salvar (nesse caso nada muda). */
 function finishWorkout() {
-  const t = todayStr(), dur = S.run ? Math.round((Date.now() - S.run.at) / 1000) : 0, got = [];
+  const t = curDate(), dur = S.run ? Math.round((Date.now() - S.run.at) / 1000) : 0, got = [], wc = workCtx;
   let first = '';
+  const msgs = [];
   ['a', 'b'].forEach(pe => {
-    let any = false;
+    if (wc && pe !== wc.who) return;   /* editando um treino salvo: só a pessoa dele */
+    let any = false; const saved = [];
     S.days.forEach(day => {
       if (day.check) return;
       let wrote = false;
       day.ex.forEach(e => { const k = e.id + (pe === 'b' ? 'b' : ''); if (drafts[k] && touched[k] && logIt(e, pe, drafts[k], t)) wrote = true; });
       /* conta o que foi salvo agora ou durante este treino (uma sessão antiga do mesmo dia não vale) */
-      const before = SS(pe).find(x => x.id === t + '|' + day.id), fresh = !!before && (!S.run || (before.ts || 0) >= S.run.at);
+      const before = SS(pe).find(x => x.id === t + '|' + day.id), fresh = !wc && !!before && (!S.run || (before.ts || 0) >= S.run.at);
       if (!wrote && !fresh) return;
       upsertSession(day, t, pe);
       const s = SS(pe).find(x => x.id === t + '|' + day.id);
-      if (s) { if (dur) s.dur = (s.dur || 0) + dur; any = true; if (!first) first = s.id; }
+      if (s) { if (dur) s.dur = (s.dur || 0) + dur; any = true; saved.push(day); if (!first) first = s.id; }
     });
-    if (any) { markOn(pe, t); got.push(pe); }
+    if (any) { markOn(pe, t); got.push(pe); try { msgs.push(cheerBuild(pe, cheerStats(pe, saved, t), dur)); } catch (e) {} }
   });
   if (!got.length) return false;
-  S.run = null; drafts = {}; Object.keys(touched).forEach(k => delete touched[k]);   /* cargas voltam a zero */
+  S.run = null; clearDrafts(); workCtx = null;   /* cargas voltam a zero */
+  cheer = msgs.length && !(wc && !wc.resumed) ? { list: msgs } : null;
   justSaved = first; who = got[0]; view = 'hist';
   return true;
 }

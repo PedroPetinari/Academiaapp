@@ -19,7 +19,7 @@ const seed = () => [
 let S = null;
 try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
 if (!S || !Array.isArray(S.days)) S = { days: seed(), active: null };
-const DEF = { name: 'AppGym', acc: '#0B7A5F', mode: 'auto', font: 'cond', lay: 'cards', den: 'cozy', n1: 'Pedro', n2: 'Brenda', rest: '90', goal: '4', code: '', bgType: 'auto', bgVal: '' };
+const DEF = { name: 'AppGym', acc: '#0B7A5F', mode: 'auto', font: 'cond', lay: 'cards', den: 'cozy', n1: 'Pedro', n2: 'Brenda', g1: 'm', g2: 'f', rest: '90', goal: '4', code: '', bgType: 'auto', bgVal: '' };
 S.cfg = Object.assign({}, DEF, S.cfg || {});
 /* temas antigos que foram trocados por temas com foto */
 const OLD_THEMES = ['palmeiras', 'crepusculo', 'morro'];
@@ -33,11 +33,11 @@ function backfill() {
   return Object.values(m).sort((a, b) => a.d < b.d ? -1 : 1);
 }
 if (!S.sessions) S.sessions = backfill();
-S.marks2 = S.marks2 || {}; S.sessions2 = S.sessions2 || []; S.tomb = S.tomb || {};
+S.marks2 = S.marks2 || {}; S.sessions2 = S.sessions2 || []; S.tomb = S.tomb || {}; S.body = S.body || []; S.body2 = S.body2 || []; S.height = S.height || {}; S.rx = S.rx || [];
 const saveLocal = () => { try { localStorage.setItem(KEY, JSON.stringify(S, (k, v) => k === 'cur' ? undefined : v)); } catch (e) {} };
 const persist = () => { saveLocal(); schedSync(); };
 
-let drafts = {}, conf = null, showNew = false, ptSlot = -1;
+let cheer = null, drafts = {}, conf = null, showNew = false, ptSlot = -1;
 
 let view = 'treino', cm = new Date(), sel = todayStr(), openP = null, photos = [];
 cm.setDate(1);

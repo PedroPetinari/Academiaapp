@@ -76,14 +76,14 @@ function runDraw() {
   const el = document.getElementById('run'); if (!el) return;
   if (S.run) {
     el.hidden = false; el.className = 'run on';
-    el.innerHTML = '<span class="rl">Treinando</span><b id="runt">' + clock((Date.now() - S.run.at) / 1000) + '</b><button class="save off" data-act="runend">■ Encerrar treino</button>' + (runMsg ? '<p class="notice" role="status">' + esc(runMsg) + '</p>' : '');
+    el.innerHTML = '<span class="rl">Treinando</span><b id="runt">' + clock(runElapsed()) + '</b><button class="save off" data-act="runend">■ Encerrar treino</button>' + (runMsg ? '<p class="notice" role="status">' + esc(runMsg) + '</p>' : '');
     runMsg = '';
     if (!runTimer) runTimer = setInterval(runTick, 1000);
   } else {
     clearInterval(runTimer); runTimer = null;
-    if (view !== 'treino') { el.hidden = true; el.innerHTML = ''; return; }
+    if (view !== 'treino' || workCtx) { el.hidden = true; el.innerHTML = ''; return; }
     el.hidden = false; el.className = 'run';
     el.innerHTML = '<button class="save wide" data-act="runstart">▶ Iniciar treino</button>';
   }
 }
-function runTick() { const t = document.getElementById('runt'); if (S.run && t) t.textContent = clock((Date.now() - S.run.at) / 1000); }
+function runTick() { const t = document.getElementById('runt'); if (S.run && t) t.textContent = clock(runElapsed()); }
