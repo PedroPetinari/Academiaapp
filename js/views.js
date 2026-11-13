@@ -120,7 +120,7 @@ function viewStyle() {
   <div class="row"><span>Mensagem do treino: ${esc(c.n1)}</span>${seg('g1', [['m', 'Ele'], ['f', 'Ela']])}</div>
   <div class="row"><span>Mensagem do treino: ${esc(c.n2)}</span>${seg('g2', [['f', 'Ela'], ['m', 'Ele']])}</div>
   <div class="row"><button class="save" data-act="cheerdemo">Ver exemplo da mensagem</button></div>
-  <div class="row"><button class="save" data-act="notif">🔔 Avisar quando reagirem</button><span class="dv">${notifState()}</span></div>
+  <div class="row"><button class="save" data-act="notif">Avisar quando reagirem</button><span class="dv">${notifState()}</span></div>
   <div class="row"><span>Descanso automático</span>${seg('rest', [['0', 'Off'], ['60', '60s'], ['90', '90s'], ['120', '120s']])}</div>
   <div class="row"><span>Meta semanal</span>${seg('goal', [['3', '3×'], ['4', '4×'], ['5', '5×'], ['6', '6×']])}</div>
   <div class="row"><label style="flex:1">Código (sincronização)<span class="pw"><input id="ccode" type="password" value="${esc(c.code || '')}" placeholder="Digite o código" autocapitalize="off" autocomplete="new-password"><button class="eye" data-act="eye" aria-label="Mostrar ou ocultar o código">👁</button></span></label></div>
