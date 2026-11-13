@@ -46,6 +46,17 @@ document.addEventListener('click', ev => {
   else if (act === 'bdel') { const d = b.dataset.d; if (prev === 'g' + d) bodyDel(who, d); else conf = 'g' + d; }
   else if (act === 'cheerx') { cheer = null; }
   else if (act === 'cheerdemo') { cheerDemo(); }
+  else if (act === 'ctab') { calTab = b.dataset.k; agMsg = ''; conf = null; }
+  else if (act === 'ntday') { noteD = b.dataset.d; noteM = noteD.slice(0, 7); ntDraft = null; agMsg = ''; }
+  else if (act === 'ntm') { const [y, m] = (noteM || (noteD || sel).slice(0, 7)).split('-').map(Number), d = new Date(y, m - 1 + (+b.dataset.s), 1); noteM = d.getFullYear() + '-' + p2(d.getMonth() + 1); noteD = noteM + '-01'; ntDraft = null; agMsg = ''; }
+  else if (act === 'ntby') { ntBy = b.dataset.v; ntDraft = null; agMsg = ''; }
+  else if (act === 'ntsave') { const el = document.getElementById('nt'); noteSave(noteD || sel, ntBy || who, el ? el.value : ''); ntDraft = null; agMsg = el && el.value.trim() ? 'Anotação salva.' : 'Anotação apagada.'; }
+  else if (act === 'ntedit') { noteD = b.dataset.d; noteM = noteD.slice(0, 7); ntBy = b.dataset.by; ntDraft = null; agMsg = ''; }
+  else if (act === 'ntdel') { const id = b.dataset.d + '|' + b.dataset.by; if (prev === 'n' + id) { noteSave(b.dataset.d, b.dataset.by, ''); ntDraft = null; } else conf = 'n' + id; }
+  else if (act === 'evk') { evF.k = b.dataset.k; }
+  else if (act === 'evw') { evF.w = b.dataset.v; }
+  else if (act === 'evadd') { agMsg = evAdd(); }
+  else if (act === 'evdel') { const id = b.dataset.id; if (prev === 'v' + id) evDel(id); else conf = 'v' + id; }
   else if (act === 'rxas') { rxAs = b.dataset.v; }
   else if (act === 'rxe') { const mine = rxList(who, b.dataset.sid).find(r => r.by === rxBy()); rxSet(who, b.dataset.sid, rxBy(), { e: mine && mine.e === b.dataset.e ? '' : b.dataset.e }); }
   else if (act === 'rxsend') { const inp = b.closest('.rxc').querySelector('input'); rxSet(who, b.dataset.sid, rxBy(), { c: inp.value.trim() }); }
@@ -116,6 +127,10 @@ document.addEventListener('input', ev => {
   if (i === 'cbg') { S.cfg.bgType = 'solid'; S.cfg.bgVal = ev.target.value; applyCfg(); saveLocal(); }
   if (i === 'ccode') { S.cfg.code = ev.target.value.trim(); saveLocal(); const m = document.getElementById('cmsg'); if (m) m.textContent = cloudMsg(); }
   if (i === 'bh') { bodySetH(who, ev.target.value); persist(); }
+  if (i === 'evd') evF.d = ev.target.value;
+  if (i === 'evd2') evF.e = ev.target.value;
+  if (i === 'evt') evF.t = ev.target.value;
+  if (i === 'nt') ntDraft = ev.target.value;
   if (i === 'cn1') { S.cfg.n1 = ev.target.value; persist(); }
   if (i === 'cn2') { S.cfg.n2 = ev.target.value; persist(); }
   if (i && i.slice(0, 3) === 'ptn') { const t = (S.cfg.pt || [])[+i.slice(3)]; if (t) { t.n = ev.target.value; saveLocal(); } }

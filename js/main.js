@@ -17,3 +17,4 @@ try {
 
 render();
 startup();
+setTimeout(() => { try { agendaToast(); } catch (e) {} }, 2500);

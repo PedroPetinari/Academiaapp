@@ -23,28 +23,37 @@ function parseT(t) {
 }
 function sugBox(e, p, L) {
   const T = parseT(e.t), last = L[L.length - 1];
-  if (!T || !last || !(last.kg > 0)) return '';
-  const inc = last.kg < 20 ? 1 : 2.5, prev = L[L.length - 2];
-  const rows = [last.r].concat((last.x || []).map(o => o.r));
+  if (!T || !last) return '';
+  /* usa a série mais pesada do último treino (em qualquer posição), não só a primeira */
+  const tp = topOf(last), pv = L.length > 1 ? topOf(L[L.length - 2]) : null;
+  if (!(tp.kg > 0)) return '';
+  const inc = tp.kg < 20 ? 1 : 2.5, best = Math.max.apply(null, tp.rs);
   let txt, kg = null;
-  if (last.s >= T.sets && rows.every(r => r >= T.hi)) { kg = last.kg + inc; txt = 'Bateu o topo da faixa (' + T.hi + ' reps). Suba para <b>' + fmt(kg) + ' kg</b> e recomece perto de ' + T.lo + ' reps.'; }
-  else if (last.r < T.lo && prev && prev.r < T.lo && prev.kg >= last.kg) { kg = Math.max(0, last.kg - inc); txt = 'Duas vezes abaixo de ' + T.lo + ' reps. Reduza para <b>' + fmt(kg) + ' kg</b> e reconstrua.'; }
-  else if (last.r < T.lo) txt = 'Ficou abaixo de ' + T.lo + ' reps. Mantenha <b>' + fmt(last.kg) + ' kg</b> e busque chegar a ' + T.lo + '.';
-  else txt = 'Mantenha <b>' + fmt(last.kg) + ' kg</b> e tente +1 rep por série (meta: ' + T.hi + ').';
+  if (tp.n >= T.sets && tp.rs.every(r => r >= T.hi)) { kg = tp.kg + inc; txt = 'Bateu o topo da faixa (' + T.hi + ' reps). Suba para <b>' + fmt(kg) + ' kg</b> e recomece perto de ' + T.lo + ' reps.'; }
+  else if (best < T.lo && pv && Math.max.apply(null, pv.rs) < T.lo && pv.kg >= tp.kg) { kg = Math.max(0, tp.kg - inc); txt = 'Duas vezes abaixo de ' + T.lo + ' reps. Reduza para <b>' + fmt(kg) + ' kg</b> e reconstrua.'; }
+  else if (best < T.lo) txt = 'Ficou abaixo de ' + T.lo + ' reps. Mantenha <b>' + fmt(tp.kg) + ' kg</b> e busque chegar a ' + T.lo + '.';
+  else txt = 'Mantenha <b>' + fmt(tp.kg) + ' kg</b> e tente +1 rep por série (meta: ' + T.hi + ').';
   return '<div class="sugb"><span>📈 ' + txt + '</span>' + (kg !== null ? '<button class="lnk" data-act="usekg" data-p="' + p + '" data-kg="' + kg + '">Usar ' + fmt(kg) + ' kg</button>' : '') + '</div>';
 }
 function weekKey(d) { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x.toLocaleDateString('sv'); }
 function goalInfo(p) {
-  const g = +S.cfg.goal || 4, cnt = {};
+  const g0 = +S.cfg.goal || 4, cnt = {}, off = offDays(p);
   Object.keys(MK(p)).forEach(k => { const w = weekKey(k); cnt[w] = (cnt[w] || 0) + 1; });
-  const cur = weekKey(todayStr()); let streak = (cnt[cur] || 0) >= g ? 1 : 0;
+  /* dias de doente/descanso diminuem a meta daquela semana; semana inteira de pausa não quebra nem conta na sequência */
+  const need = w => g0 - (off[w] || 0);
+  const cur = weekKey(todayStr()), gc = Math.max(1, need(cur));
+  let streak = need(cur) >= 1 && (cnt[cur] || 0) >= need(cur) ? 1 : 0;
   const w = new Date(cur + 'T12:00:00');
-  for (let i = 0; i < 520; i++) { w.setDate(w.getDate() - 7); if ((cnt[w.toLocaleDateString('sv')] || 0) >= g) streak++; else break; }
-  return { g, n: cnt[cur] || 0, streak };
+  for (let i = 0; i < 520; i++) {
+    w.setDate(w.getDate() - 7); const k = w.toLocaleDateString('sv'), nd = need(k);
+    if (nd <= 0) continue;
+    if ((cnt[k] || 0) >= nd) streak++; else break;
+  }
+  return { g: gc, n: cnt[cur] || 0, streak, off: off[cur] || 0 };
 }
 function goalHtml() {
   const g = goalInfo(who), dots = Array.from({ length: g.g }, (_, i) => '<i class="' + (i < g.n ? 'f' : '') + '"></i>').join('');
-  return '<p class="goal"><b>Meta da semana</b> ' + dots + ' ' + g.n + '/' + g.g + ' · 🔥 ' + g.streak + ' semana' + (g.streak === 1 ? '' : 's') + ' seguida' + (g.streak === 1 ? '' : 's') + '</p>';
+  return '<p class="goal"><b>Meta da semana</b> ' + dots + ' ' + g.n + '/' + g.g + (g.off ? ' (' + g.off + ' dia' + (g.off === 1 ? '' : 's') + ' de pausa)' : '') + ' · 🔥 ' + g.streak + ' semana' + (g.streak === 1 ? '' : 's') + ' seguida' + (g.streak === 1 ? '' : 's') + '</p>';
 }
 
 /* ---------- cronômetro de descanso ---------- */

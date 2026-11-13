@@ -276,3 +276,28 @@ input[type=date],select{font:500 16px var(--fb);color:var(--ink);background:var(
 .rxc .save{padding:8px 14px}
 .toast{position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:60;background:var(--acc);color:var(--acc-ink);border-radius:12px;padding:12px 14px;font:600 14px/1.35 var(--fb);box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .toast[hidden]{display:none}
+
+/* agenda do calendário */
+.mtabs button{flex:1;min-width:0}
+.mnav{display:flex;justify-content:space-between;align-items:center;margin:4px 0 8px;font:700 16px var(--fh)}
+.mnav b{text-transform:capitalize}
+.mnav .lnk{font-size:22px;padding:0 12px;text-decoration:none}
+.mdays{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:thin}
+.mdays button{flex:0 0 auto;min-width:46px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:6px 0;font:600 15px var(--fb);position:relative;cursor:pointer}
+.mdays button small{display:block;font:500 10px var(--fb);color:var(--mute);text-transform:uppercase}
+.mdays button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.mdays button.on small{color:var(--acc-ink)}
+.mdays button u{position:absolute;top:4px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--acc);text-decoration:none}
+.mdays button.on u{background:var(--acc-ink)}
+.mta{min-height:110px;width:100%;font:500 16px/1.4 var(--fb);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+.ink{color:var(--ink)}
+.sub{margin:16px 0 6px;font:700 16px var(--fh)}
+.nt span{display:block;margin-top:2px;white-space:pre-wrap;word-break:break-word}
+li.nt span{white-space:pre-wrap}
+.nacts{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.kd{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.chips2 .kd{margin-right:6px}
+.cd .dots{position:absolute;top:2px;left:0;right:0;display:flex;justify-content:center;gap:2px;pointer-events:none}
+.cd .dots u{width:5px;height:5px;border-radius:50%;text-decoration:none}
+.bgrid>label{min-width:0}
+.bgrid input[type=date]{max-width:100%;box-sizing:border-box}

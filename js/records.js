@@ -18,3 +18,11 @@ function recordOf(cur, olds) {
 }
 const recMarks = r => (r.kg ? 1 : 0) + (r.se ? 1 : 0);
 const recLabel = r => r.n + ' (' + [r.kg && 'carga ' + r.kg, r.se && 'melhor série ' + r.se].filter(Boolean).join(' e ') + ')';
+
+/* A série mais pesada de um registro, em qualquer posição (1ª, 2ª, 3ª...): { kg, rs: repetições das séries com essa carga, n: quantas } */
+function topOf(x) {
+  const ss = []; for (let i = 0; i < (+x.s || 1); i++) ss.push({ kg: +x.kg || 0, r: +x.r || 0 });
+  (x.x || []).forEach(o => ss.push({ kg: +o.kg || 0, r: +o.r || 0 }));
+  const kg = Math.max.apply(null, ss.map(o => o.kg)), at = ss.filter(o => o.kg === kg);
+  return { kg, rs: at.map(o => o.r), n: at.length };
+}

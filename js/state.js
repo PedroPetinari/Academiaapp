@@ -33,7 +33,7 @@ function backfill() {
   return Object.values(m).sort((a, b) => a.d < b.d ? -1 : 1);
 }
 if (!S.sessions) S.sessions = backfill();
-S.marks2 = S.marks2 || {}; S.sessions2 = S.sessions2 || []; S.tomb = S.tomb || {}; S.body = S.body || []; S.body2 = S.body2 || []; S.height = S.height || {}; S.rx = S.rx || [];
+S.marks2 = S.marks2 || {}; S.sessions2 = S.sessions2 || []; S.tomb = S.tomb || {}; S.body = S.body || []; S.body2 = S.body2 || []; S.height = S.height || {}; S.rx = S.rx || []; S.notes = S.notes || []; S.evs = S.evs || [];
 const saveLocal = () => { try { localStorage.setItem(KEY, JSON.stringify(S, (k, v) => k === 'cur' ? undefined : v)); } catch (e) {} };
 const persist = () => { saveLocal(); schedSync(); };
 

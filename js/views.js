@@ -17,7 +17,7 @@ function row(e) {
     return `<div class="ex" data-id="${e.id}"><div class="chk"><input type="checkbox" aria-label="${esc(e.name)}" data-act="chk" ${e.on === t ? 'checked' : ''}><span>${esc(e.name)}</span><span class="tg">${esc(e.t)}</span></div>${tools}</div>`;
   }
   const pp = p => {
-    const L = LG(e, p), last = L[L.length - 1], pr = L.reduce((m, x) => Math.max(m, x.kg), 0);
+    const L = LG(e, p), last = L[L.length - 1], pr = L.reduce((m, x) => Math.max(m, kgMax(x)), 0), bs = L.reduce((m, x) => { const o = bestSet(x); return setScore(o) > setScore(m) ? o : m; }, { kg: 0, r: 0 });
     const dr = draft(e, p), has = L.some(x => x.d === t);
     const hist = L.slice(-6).reverse().map(x => `<li><span>${fd(x.d)} · ${fxs(x)} · ${fmt(ev(x))} kg de volume</span><button class="lnk" data-act="dellog" data-p="${p}" data-d="${x.d}" aria-label="Apagar registro">Apagar</button></li>`).join('');
     const xs = (dr.x || []).map((o, i) => `<div class="xs"><span>Série ${(+dr.s || 0) + i + 1}</span><label>Carga (kg)<input inputmode="decimal" data-f="xkg" data-i="${i}" data-p="${p}" value="${esc(o.kg)}"></label><label>Reps<input inputmode="numeric" data-f="xr" data-i="${i}" data-p="${p}" value="${esc(o.r)}"></label><button class="lnk" data-act="delset" data-p="${p}" data-i="${i}" aria-label="Remover série">✕</button></div>`).join('');
@@ -28,7 +28,7 @@ function row(e) {
         <label>Reps<input inputmode="numeric" data-f="r" data-p="${p}" value="${esc(dr.r)}"></label>
         <button class="save" data-act="save" data-p="${p}">${has ? 'Atualizar' : 'Salvar'}</button>
       </div>${xs}<button class="lnk addset" data-act="addset" data-p="${p}">+ série</button>
-      <p class="meta">${last ? `Última: ${fxs(last)} · ${fd(last.d)}` : 'Sem registros ainda'}${pr ? ` · <span class="pr">Recorde: ${fmt(pr)} kg</span>` : ''}</p>${sugBox(e, p, L)}
+      <p class="meta">${last ? `Última: ${fxs(last)} · ${fd(last.d)}` : 'Sem registros ainda'}${pr ? ` · <span class="pr">Recorde: ${fmt(pr)} kg</span>` : ''}${setScore(bs) > 0 ? ` · <span class="pr">Melhor série: ${setTxt(bs)}</span>` : ''}</p>${sugBox(e, p, L)}
       ${L.length ? `<details><summary>Histórico</summary><ul>${hist}</ul></details>` : ''}</div>`;
   };
   return `<article class="ex" data-id="${e.id}">
@@ -37,7 +37,7 @@ function row(e) {
 }
 
 function render() {
-  applyCfg(); renderBar(); renderOv(); renderCheer(); renderAsk(); rtShow(); runDraw();
+  applyCfg(); renderBar(); renderOv(); renderCheer(); renderAsk(); rtShow(); agendaAfter(); runDraw();
   const tb = document.getElementById('tabs'), nd = document.getElementById('newday');
   tb.hidden = nd.hidden = view !== 'treino';
   if (view !== 'treino') { document.getElementById('main').innerHTML = view === 'cal' ? viewCal() : view === 'corpo' ? viewBody() : view === 'hist' ? viewHist() : view === 'fotos' ? viewPhotos() : viewStyle(); document.querySelectorAll('[data-bg]').forEach(b => { b.style.background = b.dataset.bg; }); document.querySelectorAll('[data-th]').forEach(b => { const k = b.dataset.th, dk = wantDark(); b.style.background = thumbBg(k); b.style.color = dk ? '#fff' : THEMES[k].l.ink; b.style.textShadow = dk ? '' : 'none'; }); document.querySelectorAll('[data-ph]').forEach(b => { const u = bgUrls[b.dataset.ph]; if (u) b.style.background = 'url(' + u + ') center top/cover'; else loadBg(b.dataset.ph); }); return; }
@@ -69,10 +69,12 @@ function renderBar() {
 function viewCal() {
   const y = cm.getFullYear(), m = cm.getMonth(), first = new Date(y, m, 1).getDay(), n = new Date(y, m + 1, 0).getDate();
   const p = y + '-' + String(m + 1).padStart(2, '0') + '-', t = todayStr();
+  const evs = evFor(who);
   let cells = '<i></i>'.repeat(first);
   for (let d = 1; d <= n; d++) {
     const k = p + String(d).padStart(2, '0');
-    cells += `<button class="cd ${MK(who)[k] ? 'on' : ''} ${Object.values(others).some(o => (o.marks || {})[k]) ? 'pm' : ''} ${k === t ? 'td' : ''} ${k === sel ? 'sl' : ''}" data-act="seld" data-d="${k}" aria-label="Dia ${d}">${d}</button>`;
+    const evd = evOn(evs, k).slice(0, 3).map(x => `<u style="background:${evKind(x.k)[2]}"></u>`).join('');
+    cells += `<button class="cd ${MK(who)[k] ? 'on' : ''} ${Object.values(others).some(o => (o.marks || {})[k]) ? 'pm' : ''} ${k === t ? 'td' : ''} ${k === sel ? 'sl' : ''}" data-act="seld" data-d="${k}" aria-label="Dia ${d}">${d}${evd ? `<span class="dots">${evd}</span>` : ''}</button>`;
   }
   const mc = Object.keys(MK(who)).filter(k => k.startsWith(p)).length, tot = Object.keys(MK(who)).length;
   const li = S.days.filter(d => !d.check).flatMap(d => d.ex.flatMap(e => LG(e, who).filter(x => x.d === sel).map(x => `<li><span>${esc(e.name)}</span><span>${fxs(x)}</span></li>`))).join('');
@@ -83,7 +85,7 @@ function viewCal() {
   <div class="cal"><div class="cn"><button class="lnk" data-act="prevm" aria-label="Mês anterior">‹</button><b>${cm.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</b><button class="lnk" data-act="nextm" aria-label="Próximo mês">›</button></div>
   <div class="cg">${'DSTQQSS'.split('').map(c => `<span>${c}</span>`).join('')}${cells}</div></div>
   <div class="sel"><b>${fd(sel)}</b><button class="save ${MK(who)[sel] ? 'off' : ''}" data-act="mark">${MK(who)[sel] ? 'Desmarcar presença' : 'Marcar presença'}</button></div>
-  <ul class="ll">${(dr + li + lo) || '<li><span>Nenhum exercício registrado neste dia.</span></li>'}</ul>`;
+  ${agendaHtml(`<ul class="ll">${(dr + li + lo + dayExtras()) || '<li><span>Nada registrado neste dia.</span></li>'}</ul>`)}`;
 }
 
 function viewPhotos() {
@@ -115,7 +117,10 @@ function viewStyle() {
   <div class="row col"><span>Meus temas salvos</span><div class="chips">${(c.saved || []).map((t, i) => `<span class="chip"><button data-act="applytheme" data-i="${i}">${esc(t.n)}</button><button data-act="deltheme" data-i="${i}" aria-label="Apagar tema">✕</button></span>`).join('') || '<span class="dv">Nenhum ainda.</span>'}</div><div class="btnrow"><input id="tname" placeholder="Nome do tema" maxlength="20"><button class="save" data-act="savetheme">Salvar tema atual</button></div></div>
   <div class="row"><span>Fonte</span>${seg('font', [['cond', 'Condensada'], ['mod', 'Moderna'], ['serif', 'Clássica']])}</div>
   <div class="row"><label style="flex:1">Nome da pessoa 1<input id="cn1" value="${esc(c.n1)}" maxlength="14"></label><label style="flex:1">Nome da pessoa 2<input id="cn2" value="${esc(c.n2)}" maxlength="14"></label></div>
-  <div class="row"><button class="save" data-act="notif">Ativar Notificações</button><span class="dv">${notifState()}</span></div>
+  <div class="row"><span>Mensagem do treino: ${esc(c.n1)}</span>${seg('g1', [['m', 'Ele'], ['f', 'Ela']])}</div>
+  <div class="row"><span>Mensagem do treino: ${esc(c.n2)}</span>${seg('g2', [['f', 'Ela'], ['m', 'Ele']])}</div>
+  <div class="row"><button class="save" data-act="cheerdemo">Ver exemplo da mensagem</button></div>
+  <div class="row"><button class="save" data-act="notif">🔔 Avisar quando reagirem</button><span class="dv">${notifState()}</span></div>
   <div class="row"><span>Descanso automático</span>${seg('rest', [['0', 'Off'], ['60', '60s'], ['90', '90s'], ['120', '120s']])}</div>
   <div class="row"><span>Meta semanal</span>${seg('goal', [['3', '3×'], ['4', '4×'], ['5', '5×'], ['6', '6×']])}</div>
   <div class="row"><label style="flex:1">Código (sincronização)<span class="pw"><input id="ccode" type="password" value="${esc(c.code || '')}" placeholder="Digite o código" autocapitalize="off" autocomplete="new-password"><button class="eye" data-act="eye" aria-label="Mostrar ou ocultar o código">👁</button></span></label></div>
@@ -148,6 +153,6 @@ function viewHist() {
 
 function softRender() {
   const a = document.activeElement;
-  if (a && a.tagName === 'INPUT' && a.closest('#main, #ov')) pend = true; else render();
+  if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') && a.closest('#main, #ov')) pend = true; else render();
 }
 document.addEventListener('focusout', () => { if (pend) { pend = false; setTimeout(render, 700); } });

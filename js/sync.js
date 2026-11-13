@@ -31,14 +31,15 @@ function mergeHeight(a, b) {
   return o;
 }
 /* reações: uma por treino e por pessoa; vale a mais recente e respeita o que foi apagado (lápide 'x' + id) */
-function mergeRx(a, b, tomb) {
+function mergeBy(a, b, tomb, pre, max) {
   const m = {};
   (a || []).concat(b || []).forEach(x => {
-    if (tomb['x' + x.id] && tsOf(x) <= tomb['x' + x.id]) return;
+    if (tomb[pre + x.id] && tsOf(x) <= tomb[pre + x.id]) return;
     if (!m[x.id] || tsOf(x) > tsOf(m[x.id])) m[x.id] = x;
   });
-  return Object.values(m).sort((p, q) => p.ts - q.ts).slice(-1000);
+  return Object.values(m).sort((p, q) => (p.ts || 0) - (q.ts || 0)).slice(-max);
 }
+const mergeRx = (a, b, tomb) => mergeBy(a, b, tomb, 'x', 1000);
 function mergeState(L, R) {
   const tomb = Object.assign({}, L.tomb || {}), rt = R.tomb || {};
   Object.keys(rt).forEach(k => { tomb[k] = Math.max(tomb[k] || 0, rt[k]); });
@@ -56,10 +57,10 @@ function mergeState(L, R) {
   });
   return { days, marks: mergeMarks(L.marks, R.marks, tomb, 'ma'), marks2: mergeMarks(L.marks2, R.marks2, tomb, 'mb'),
     sessions: mergeSess(L.sessions, R.sessions, tomb, 'sa'), sessions2: mergeSess(L.sessions2, R.sessions2, tomb, 'sb'),
-    body: mergeLogs(L.body, R.body, tomb, 'ga'), body2: mergeLogs(L.body2, R.body2, tomb, 'gb'), height: mergeHeight(L.height, R.height), rx: mergeRx(L.rx, R.rx, tomb), tomb };
+    body: mergeLogs(L.body, R.body, tomb, 'ga'), body2: mergeLogs(L.body2, R.body2, tomb, 'gb'), height: mergeHeight(L.height, R.height), rx: mergeRx(L.rx, R.rx, tomb), notes: mergeBy(L.notes, R.notes, tomb, 'n', 3000), evs: mergeBy(L.evs, R.evs, tomb, 'v', 1000), tomb };
 }
-const snap = () => ({ days: S.days, marks: S.marks, marks2: S.marks2 || {}, sessions: S.sessions || [], sessions2: S.sessions2 || [], body: S.body || [], body2: S.body2 || [], height: S.height || {}, rx: S.rx || [], tomb: S.tomb || {} });
-function applyMerged(m) { S.days = m.days; S.marks = m.marks; S.marks2 = m.marks2; S.sessions = m.sessions; S.sessions2 = m.sessions2; S.body = m.body; S.body2 = m.body2; S.height = m.height; S.rx = m.rx; S.tomb = m.tomb; }
+const snap = () => ({ days: S.days, marks: S.marks, marks2: S.marks2 || {}, sessions: S.sessions || [], sessions2: S.sessions2 || [], body: S.body || [], body2: S.body2 || [], height: S.height || {}, rx: S.rx || [], notes: S.notes || [], evs: S.evs || [], tomb: S.tomb || {} });
+function applyMerged(m) { S.days = m.days; S.marks = m.marks; S.marks2 = m.marks2; S.sessions = m.sessions; S.sessions2 = m.sessions2; S.body = m.body; S.body2 = m.body2; S.height = m.height; S.rx = m.rx; S.notes = m.notes; S.evs = m.evs; S.tomb = m.tomb; }
 const stable = o => JSON.stringify(o, (k, v) => (v && typeof v === 'object' && !Array.isArray(v)) ? Object.keys(v).sort().reduce((a, x) => { a[x] = v[x]; return a; }, {}) : v);
 
 /* ---------- nuvem (Supabase) ---------- */
@@ -80,7 +81,7 @@ async function syncNow() {
     const remote = (await rpc('get_casal', { p_code: S.cfg.code })) || {};
     const m = mergeState(snap(), remote);
     const rxBefore = new Map((S.rx || []).map(x => [x.id, x.ts]));
-    applyMerged(m); saveLocal(); try { rxNotify(rxBefore); } catch (e) {}
+    applyMerged(m); saveLocal(); try { rxNotify(rxBefore); } catch (e) {} try { agendaToast(); } catch (e) {}
     if (stable(m) !== stable(remote)) await rpc('save_casal', { p_code: S.cfg.code, p_data: m });
     await syncPhotos();
     SB.status = 'Sincronizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
