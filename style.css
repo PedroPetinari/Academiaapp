@@ -388,3 +388,50 @@ body.noscroll{overflow:hidden}
 .vrx{background:var(--bg);color:var(--ink);border-radius:14px;padding:4px 12px 10px}
 .vrx .rx{border-top:0;margin-top:0}
 .rxbar button.rxb{font-size:20px;padding:4px 10px}
+
+/* ===== Treino: um exercício por vez ===== */
+.xc{padding:14px 14px 16px}
+.exn{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:-2px 0 12px;padding:2px}
+.exn button{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--mute);font:700 14px var(--fb);cursor:pointer}
+.exn button.dn{border-color:var(--acc);color:var(--acc)}
+.exn button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.xh h3{margin:0;font:700 24px/1.15 var(--fh)}
+.xh .xm{margin:4px 0 12px;color:var(--mute);font:500 14px var(--fb)}
+.xc .sg.who{margin:0 0 12px}
+.sets{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:18px;background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.sr{display:grid;grid-template-columns:20px 1fr 1fr 48px;gap:8px;align-items:center}
+.sr .sn{color:var(--mute);font:600 14px var(--fb);text-align:center}
+.sr label{display:flex;flex-direction:column;gap:2px;padding:6px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--mute);font:500 12px var(--fb);min-width:0}
+.sr label:focus-within{border-color:var(--acc)}
+.sr input{border:0;background:none;color:var(--ink);font:700 22px var(--fh);width:100%;min-width:0;padding:0;outline:0}
+.sr .ck{width:48px;height:48px;border-radius:14px;border:1px solid var(--line);background:none;color:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
+.sr .ck svg{width:24px;height:24px}
+.sr .ck.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.addset{display:block;margin:10px auto 0;text-decoration:none;color:var(--acc);font:600 15px var(--fb)}
+.xc .vol{margin:6px 0 0;text-align:center;color:var(--mute);font:500 13px var(--fb)}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.bdg{padding:7px 12px;border-radius:12px;border:1px solid color-mix(in srgb,var(--pr) 45%,transparent);background:color-mix(in srgb,var(--pr) 12%,transparent);color:var(--pr);font:600 13px var(--fb)}
+.rt.inl,.rt.inl.run{position:static;transform:none;margin:14px 0 0;width:100%;justify-content:space-between;border-radius:16px;padding:6px 8px 6px 16px;box-shadow:none;background:linear-gradient(90deg,color-mix(in srgb,var(--acc) 28%,var(--surface)) var(--p,0%),var(--surface) var(--p,0%))}
+.rt.inl:not(.run){padding:6px;background:var(--surface)}
+.rt.inl:not(.run) button{width:100%;padding:11px;border:0;font-size:14px;color:var(--mute)}
+.xnav{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px}
+.xnav .save{margin:0;flex:1;max-width:60%}
+.xnav button:disabled{visibility:hidden}
+.lpa{display:none}
+
+/* ===== menu ao segurar ===== */
+[data-lp]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+[data-lp] input,[data-lp] textarea{-webkit-user-select:text;user-select:text}
+.lph{margin:8px 0 0;color:var(--mute);font:500 12px var(--fb)}
+.lpsheet{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center}
+.lpbd{position:absolute;inset:0;background:rgba(0,0,0,.5);animation:lpf .15s ease}
+.lppn{position:relative;width:100%;max-width:520px;margin:0 8px max(8px,env(safe-area-inset-bottom));padding:8px;border-radius:24px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:flex;flex-direction:column;gap:6px;animation:lpu .18s ease}
+.lpt{margin:6px 10px 2px;color:var(--mute);font:600 13px var(--fb);text-align:center}
+.lpb{border:0;border-radius:16px;padding:16px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink);font:600 16px var(--fb);cursor:pointer}
+.lpb.dg{color:var(--danger)}
+.lpb.sure{background:var(--danger);color:#fff}
+@keyframes lpf{from{opacity:0}}@keyframes lpu{from{transform:translateY(30px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.lpbd,.lppn{animation:none}}
+.xc .rx{margin-top:10px}
+.sr input::placeholder{color:var(--mute);opacity:.55}
+.rt.run:not(.inl){width:max-content;max-width:calc(100% - 28px);white-space:nowrap}

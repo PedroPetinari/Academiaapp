@@ -12,7 +12,13 @@ document.addEventListener('click', ev => {
   else if (act === 'hstart') { const d = suggestDay(who); if (d && !workCtx) { S.active = d.id; if (!S.run) S.run = { at: Date.now() }; } view = 'treino'; }
   else if (act === 'hnext') { const D = trainDays(), c = suggestDay(who), i = D.findIndex(x => x.id === (c && c.id)); homeDay = D[(i + 1) % D.length].id; }
   else if (act === 'gocal') { sel = b.dataset.d; cm = new Date(sel + 'T12:00:00'); view = 'cal'; calTab = 'dia'; }
-  else if (act === 'usekg') { const pe = b.dataset.p === 'b' ? 'b' : 'a', k = ex.id + (pe === 'b' ? 'b' : ''), dr = drafts[k]; if (dr) { dr.kg = b.dataset.kg; touched[k] = true; } }
+  else if (act === 'rxdele' || act === 'rxdelc') { rxSet(b.dataset.p, b.dataset.sid, b.dataset.by, act === 'rxdele' ? { e: '' } : { c: '' }); }
+  else if (act === 'rok') { rowCheck(ex, day, b.dataset.p === 'b' ? 'b' : 'a', +b.dataset.i, t); }
+  else if (act === 'addrow') { rowAdd(ex, b.dataset.p === 'b' ? 'b' : 'a'); }
+  else if (act === 'delrow') { rowDel(ex, day, b.dataset.p === 'b' ? 'b' : 'a', +b.dataset.i, t); }
+  else if (act === 'exgo') { exCur = day.ex[+b.dataset.i].id; }
+  else if (act === 'exprev' || act === 'exnext') { const i = day.ex.findIndex(e => e.id === exCur) + (act === 'exnext' ? 1 : -1); if (day.ex[i]) exCur = day.ex[i].id; }
+  else if (act === 'usekg') { const pe = b.dataset.p === 'b' ? 'b' : 'a', k = ex.id + (pe === 'b' ? 'b' : ''), dr = drafts[k]; if (dr) useKg(ex, pe, b.dataset.kg); }
   else if (act === 'editex') { editEx = ex.id; }
   else if (act === 'cancelex') { editEx = null; }
   else if (act === 'saveex') {
@@ -108,6 +114,11 @@ document.addEventListener('click', ev => {
 document.addEventListener('input', ev => {
   const f = ev.target.dataset.f; if (!f) return;
   const art = ev.target.closest('.ex'), k = art.dataset.id + (ev.target.dataset.p === 'b' ? 'b' : ''), d = drafts[k]; if (!d) return;
+  if (f === 'rkg' || f === 'rr') {
+    const day0 = S.days.find(x => x.id === S.active), e0 = day0 && day0.ex.find(x => x.id === art.dataset.id); if (!e0) return;
+    setRow(e0, ev.target.dataset.p === 'b' ? 'b' : 'a', +ev.target.dataset.i, f === 'rkg' ? 'kg' : 'r', ev.target.value);
+    const vv = art.querySelector('[data-xvol]'); if (vv) vv.textContent = vol(d) + ' kg'; return;
+  }
   if (f === 'xkg' || f === 'xr') { const o = (d.x || [])[+ev.target.dataset.i]; if (o) o[f === 'xkg' ? 'kg' : 'r'] = ev.target.value; } else d[f] = ev.target.value; touched[k] = true;
   ev.target.closest('.pp').querySelector('[data-vol]').textContent = vol(d) + ' kg';
 });

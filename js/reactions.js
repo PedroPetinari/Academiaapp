@@ -21,8 +21,11 @@ function rxSet(p, sid, by, patch) {
 function rxHtml(x, p) {
   p = p || who;
   const by = rxBy(), mine = rxList(p, x.id).find(r => r.by === by) || { e: '', c: '' }, me = rxName(mine.e);
-  const list = rxList(p, x.id).map(r => `<p class="rxi"><b>${esc(N(r.by))}</b>${r.e ? ' <span class="rxe">' + esc(rxName(r.e)) + '</span>' : ''}${r.c ? ' ' + esc(r.c) : ''}</p>`).join('');
-  return `<div class="rx">${list}<div class="rxbar"><span>Reagir como</span>${['a', 'b'].map(v => `<button class="${by === v ? 'on' : ''}" data-act="rxas" data-v="${v}">${esc(N(v))}</button>`).join('')}</div>
+  const list = rxList(p, x.id).map(r => {
+    const mineR = r.by === by, acts = mineR ? `<span class="lpa" hidden>${r.e ? `<button data-lpa data-lpl="Apagar reação" data-lpd data-act="rxdele" data-p="${p}" data-sid="${x.id}" data-by="${r.by}"></button>` : ''}${r.c ? `<button data-lpa data-lpl="Apagar comentário" data-lpd data-act="rxdelc" data-p="${p}" data-sid="${x.id}" data-by="${r.by}"></button>` : ''}</span>` : '';
+    return `<p class="rxi" ${mineR ? `data-lp data-lpid="rx${p}${x.id}${r.by}" data-lpt="${esc(N(r.by))}"` : ''}><b>${esc(N(r.by))}</b>${r.e ? ' <span class="rxe">' + esc(rxName(r.e)) + '</span>' : ''}${r.c ? ' ' + esc(r.c) : ''}${acts}</p>`;
+  }).join('');
+  return `<div class="rx">${list}${rxList(p, x.id).some(r => r.by === by) ? '<p class="lph">Segure o seu comentário ou reação para apagar.</p>' : ''}<div class="rxbar"><span>Reagir como</span>${['a', 'b'].map(v => `<button class="${by === v ? 'on' : ''}" data-act="rxas" data-v="${v}">${esc(N(v))}</button>`).join('')}</div>
     <div class="rxbar">${RXE.map(e => `<button class="rxb ${me === e ? 'on' : ''}" data-act="rxe" data-p="${p}" data-sid="${x.id}" data-e="${e}" aria-label="Reagir com ${e}">${e}</button>`).join('')}</div>
     <div class="rxc"><input class="rxin" data-sid="${x.id}" placeholder="Escreva um comentário" maxlength="140" value="${esc(mine.c)}" aria-label="Comentário"><button class="save" data-act="rxsend" data-p="${p}" data-sid="${x.id}">Enviar</button></div></div>`;
 }

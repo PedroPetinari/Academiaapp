@@ -57,20 +57,20 @@ function notesHtml() {
   const WD = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
   const days = Array.from({ length: n }, (_, i) => { const k = m + '-' + p2(i + 1); return `<button class="${k === noteD ? 'on' : ''}" data-act="ntday" data-d="${k}"><small>${WD[new Date(y, mo - 1, i + 1).getDay()]}</small>${i + 1}${NL().some(x => x.d === k) ? '<u></u>' : ''}</button>`; }).join('');
   const lst = NL().filter(x => x.d.startsWith(m)).sort((a, b) => a.d === b.d ? (a.by < b.by ? -1 : 1) : (a.d < b.d ? 1 : -1))
-    .map(x => `<div class="brow nt"><div><b>${fd(x.d)} · ${esc(N(x.by))}</b><span>${esc(x.t)}</span></div><div class="nacts"><button class="lnk" data-act="ntedit" data-d="${x.d}" data-by="${x.by}">Editar</button><button class="lnk ${conf === 'n' + x.id ? 'sure' : ''}" data-act="ntdel" data-d="${x.d}" data-by="${x.by}">${conf === 'n' + x.id ? 'Confirmar' : 'Apagar'}</button></div></div>`).join('');
+    .map(x => `<div class="brow nt" data-lp data-lpid="nt${x.id}" data-lpt="Anotação de ${fd(x.d)}"><div><b>${fd(x.d)} · ${esc(N(x.by))}</b><span>${esc(x.t)}</span></div><span class="lpa" hidden><button data-lpa data-lpl="Editar" data-act="ntedit" data-d="${x.d}" data-by="${x.by}"></button><button data-lpa data-lpl="Apagar" data-lpd data-lpc data-act="ntdel" data-d="${x.d}" data-by="${x.by}"></button></span></div>`).join('');
   const title = new Date(y, mo - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }), long = new Date(noteD + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
   return `<div class="mnav"><button class="lnk" data-act="ntm" data-s="-1" aria-label="Mês anterior">‹</button><b>${esc(title)}</b><button class="lnk" data-act="ntm" data-s="1" aria-label="Próximo mês">›</button></div>
   <div class="mdays">${days}</div>
   <label class="bl" style="margin-top:12px">Anotação de <b class="ink">${esc(long)}</b><textarea id="nt" class="mta" maxlength="2000" placeholder="Escreva aqui: como foi o treino, como você se sentiu, o que quer lembrar...">${esc(ntDraft !== null ? ntDraft : cur ? cur.t : '')}</textarea></label>
   <div class="rxbar"><span>Escrevendo como</span>${['a', 'b'].map(v => `<button class="${by === v ? 'on' : ''}" data-act="ntby" data-v="${v}">${esc(N(v))}</button>`).join('')}</div>
   <div class="btnrow"><button class="save" data-act="ntsave">Salvar anotação</button></div><p class="dv">${esc(agMsg)}</p>
-  <h3 class="sub">Anotações de ${esc(title)}</h3>${lst || '<p class="empty">Nenhuma anotação neste mês.</p>'}`;
+  <h3 class="sub">Anotações de ${esc(title)}</h3>${lst ? '<p class="lph">Segure uma anotação para editar ou apagar.</p>' + lst : '<p class="empty">Nenhuma anotação neste mês.</p>'}`;
 }
 
 function eventsHtml() {
   if (!evF.d) evF.d = sel;
   const t = todayStr(), lst = EL().filter(x => (x.e || x.d) >= t).sort((a, b) => a.d < b.d ? -1 : 1)
-    .map(x => `<div class="brow nt"><div><b><i class="kd" style="background:${evKind(x.k)[2]}"></i>${esc(x.t)}</b><span>${esc(evKind(x.k)[1])} · ${evRange(x)} · ${esc(evWho(x))} · ${evWhen(x)}</span></div><button class="lnk ${conf === 'v' + x.id ? 'sure' : ''}" data-act="evdel" data-id="${x.id}">${conf === 'v' + x.id ? 'Confirmar' : 'Apagar'}</button></div>`).join('');
+    .map(x => `<div class="brow nt" data-lp data-lpid="ev${x.id}" data-lpt="${esc(x.t)}"><div><b><i class="kd" style="background:${evKind(x.k)[2]}"></i>${esc(x.t)}</b><span>${esc(evKind(x.k)[1])} · ${evRange(x)} · ${esc(evWho(x))} · ${evWhen(x)}</span></div><span class="lpa" hidden><button data-lpa data-lpl="Apagar evento" data-lpd data-lpc data-act="evdel" data-id="${x.id}"></button></span></div>`).join('');
   return `<p class="dv bcap">Novo evento</p>
   <div class="bgrid"><label>Data<input type="date" id="evd" value="${evF.d}"></label><label>Até (opcional)<input type="date" id="evd2" value="${evF.e}" min="${evF.d}"></label></div>
   <label class="bl">Título<input id="evt" value="${esc(evF.t)}" maxlength="80" placeholder="Ex.: Viagem para a praia"></label>
@@ -78,7 +78,7 @@ function eventsHtml() {
   <div class="rxbar"><span>Vale para</span>${[['ab', 'Os dois'], ['a', N('a')], ['b', N('b')]].map(([v, n]) => `<button class="${evF.w === v ? 'on' : ''}" data-act="evw" data-v="${v}">${esc(n)}</button>`).join('')}</div>
   ${EVOFF.includes(evF.k) ? '<p class="dv">Doente e Descanso diminuem a meta da semana, para não quebrar a sequência.</p>' : ''}
   <div class="btnrow"><button class="save" data-act="evadd">Adicionar evento</button></div><p class="dv">${esc(agMsg)}</p>
-  <h3 class="sub">Próximos eventos</h3>${lst || '<p class="empty">Nenhum evento marcado.</p>'}`;
+  <h3 class="sub">Próximos eventos</h3>${lst ? '<p class="lph">Segure um evento para apagar.</p>' + lst : '<p class="empty">Nenhum evento marcado.</p>'}`;
 }
 
 /* guias embaixo do calendário; a primeira mostra o resumo do dia (o que já existia) */

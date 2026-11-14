@@ -11,10 +11,10 @@ function editForm(e, chk) {
 }
 function row(e) {
   const t = curDate(), ed = editEx === e.id;
-  const tools = `<div class="acts2"><button class="lnk" data-act="editex">Editar</button><button class="lnk ${conf === e.id ? 'sure' : ''}" data-act="delex">${conf === e.id ? 'Confirmar remoção' : 'Remover'}</button></div>`;
+  const tools = `<span class="lpa" hidden><button data-lpa data-lpl="Editar" data-act="editex"></button><button data-lpa data-lpl="Remover" data-lpd data-lpc data-act="delex"></button></span>`;
   if (S.cur.check) {
     if (ed) return `<div class="ex" data-id="${e.id}">${editForm(e, true)}</div>`;
-    return `<div class="ex" data-id="${e.id}"><div class="chk"><input type="checkbox" aria-label="${esc(e.name)}" data-act="chk" ${e.on === t ? 'checked' : ''}><span>${esc(e.name)}</span><span class="tg">${esc(e.t)}</span></div>${tools}</div>`;
+    return `<div class="ex" data-id="${e.id}" data-lp data-lpid="ck${e.id}" data-lpt="${esc(e.name)}"><div class="chk"><input type="checkbox" aria-label="${esc(e.name)}" data-act="chk" ${e.on === t ? 'checked' : ''}><span>${esc(e.name)}</span><span class="tg">${esc(e.t)}</span></div>${tools}</div>`;
   }
   const pp = p => {
     const L = LG(e, p), last = L[L.length - 1], pr = L.reduce((m, x) => Math.max(m, kgMax(x)), 0), bs = L.reduce((m, x) => { const o = bestSet(x); return setScore(o) > setScore(m) ? o : m; }, { kg: 0, r: 0 });
@@ -39,10 +39,10 @@ function row(e) {
 function render() {
   if (view === 'cal' || view === 'hist') lastAg = view; if (view === 'corpo' || view === 'fotos') lastPg = view;
   document.documentElement.dataset.view = view;
-  applyCfg(); renderBar(); renderOv(); renderCheer(); renderAsk(); rtShow(); agendaAfter(); runDraw();
+  applyCfg(); renderBar(); renderOv(); renderCheer(); renderAsk(); agendaAfter(); runDraw();
   const tb = document.getElementById('tabs'), nd = document.getElementById('newday');
   tb.hidden = nd.hidden = view !== 'treino';
-  if (view !== 'treino') { document.getElementById('main').innerHTML = subTabs(view) + (view === 'hoje' ? viewHome() : view === 'cal' ? viewCal() : view === 'corpo' ? viewBody() + progExtra() : view === 'hist' ? viewHist() : view === 'fotos' ? viewPhotos() : viewStyle()); document.querySelectorAll('[data-bg]').forEach(b => { b.style.background = b.dataset.bg; }); document.querySelectorAll('[data-th]').forEach(b => { const k = b.dataset.th, dk = wantDark(); b.style.background = thumbBg(k); b.style.color = dk ? '#fff' : THEMES[k].l.ink; b.style.textShadow = dk ? '' : 'none'; }); document.querySelectorAll('[data-ph]').forEach(b => { const u = bgUrls[b.dataset.ph]; if (u) b.style.background = 'url(' + u + ') center top/cover'; else loadBg(b.dataset.ph); }); return; }
+  if (view !== 'treino') { document.getElementById('main').innerHTML = subTabs(view) + (view === 'hoje' ? viewHome() : view === 'cal' ? viewCal() : view === 'corpo' ? viewBody() + progExtra() : view === 'hist' ? viewHist() : view === 'fotos' ? viewPhotos() : viewStyle()); document.querySelectorAll('[data-bg]').forEach(b => { b.style.background = b.dataset.bg; }); document.querySelectorAll('[data-th]').forEach(b => { const k = b.dataset.th, dk = wantDark(); b.style.background = thumbBg(k); b.style.color = dk ? '#fff' : THEMES[k].l.ink; b.style.textShadow = dk ? '' : 'none'; }); document.querySelectorAll('[data-ph]').forEach(b => { const u = bgUrls[b.dataset.ph]; if (u) b.style.background = 'url(' + u + ') center top/cover'; else loadBg(b.dataset.ph); }); rtShow(); return; }
   const t = curDate();
   let day = S.days.find(d => d.id === S.active) || S.days[0];
   S.active = day ? day.id : null;
@@ -53,14 +53,14 @@ function render() {
   { const tb2 = document.getElementById('tabs'), on = tb2.querySelector('.st.on'); if (on) tb2.scrollLeft = on.offsetLeft - tb2.clientWidth / 2 + on.offsetWidth / 2; }
   document.getElementById('newday').innerHTML = showNew ? `<div class="newday"><input id="ndn" placeholder="Nome do treino (ex.: Costas 2)" maxlength="40"><button class="save" data-act="mkday">Criar treino</button><button class="lnk" data-act="cancelday">Cancelar</button></div>` : '';
   const main = document.getElementById('main');
-  if (!day) { main.innerHTML = '<p class="empty">Nenhum treino ainda. Toque em “+ Treino” para criar o primeiro.</p>'; return; }
+  if (!day) { main.innerHTML = '<p class="empty">Nenhum treino ainda. Toque em “+ Treino” para criar o primeiro.</p>'; rtShow(); return; }
   const nt = notice; notice = '';
   const dv = day.check ? '' : `<p class="dv">Volume de hoje neste treino: ${esc(N('a'))} ${fmt(dayVol(day, t, 'a'))} kg · ${esc(N('b'))} ${fmt(dayVol(day, t, 'b'))} kg</p>`;
   const eb = workCtx ? `<div class="editbar"><span>${workCtx.resumed ? 'Retomando' : 'Editando'}: <b>${esc(day.name)}</b> · ${fd(workCtx.d)} · ${esc(N(workCtx.who))}</span><button class="lnk" data-act="editcancel">Cancelar</button></div>` : '';
-  main.innerHTML = `${eb}<div class="dayhead"><h2>${esc(day.name)}</h2><button class="lnk ${conf === day.id ? 'sure' : ''}" data-act="delday">${conf === day.id ? 'Confirmar remoção do treino' : 'Remover treino'}</button></div>${dv}
-  ${day.ex.length ? day.ex.map(row).join('') : '<p class="empty">Este treino está vazio. Adicione um exercício abaixo.</p>'}
+  main.innerHTML = `${eb}<div class="dayhead" data-lp data-lpid="dy${day.id}" data-lpt="${esc(day.name)}"><h2>${esc(day.name)}</h2><span class="lpa" hidden><button data-lpa data-lpl="Remover treino" data-lpd data-lpc data-act="delday"></button></span></div>${dv}
+  ${!day.ex.length ? '<p class="empty">Este treino está vazio. Adicione um exercício abaixo.</p>' : day.check ? day.ex.map(row).join('') : exCard(day)}
   ${day.check ? '' : `${nt ? `<p class="notice" role="status">${nt}</p>` : ''}<button class="save wide fin" data-act="finish">${S.run ? 'Encerrar treino' : workCtx ? 'Salvar alterações' : 'Salvar treino'}</button>`}
-  <div class="add-ex"><input id="nn" placeholder="${day.check ? 'Novo item' : 'Novo exercício'}" maxlength="60"><input id="nt" placeholder="${day.check ? 'Tempo ou reps' : 'Ex.: 3×10'}" maxlength="24"><button data-act="addex">Adicionar</button></div>`;
+  <div class="add-ex"><input id="nn" placeholder="${day.check ? 'Novo item' : 'Novo exercício'}" maxlength="60"><input id="nt" placeholder="${day.check ? 'Tempo ou reps' : 'Ex.: 3×10'}" maxlength="24"><button data-act="addex">Adicionar</button></div>`; rtShow();
 }
 
 function viewCal() {
@@ -129,7 +129,7 @@ function viewHist() {
   const all = SS(who), ss = all.slice().reverse();
   const head = `<div class="dayhead"><h2>Histórico</h2></div>${whoSeg()}<p class="dv">${ss.length} treino${ss.length === 1 ? '' : 's'} salvo${ss.length === 1 ? '' : 's'}</p>${histMsg ? `<p class="notice" role="status">${esc(histMsg)}</p>` : ''}`;
   if (!ss.length) return head + '<p class="empty">Nada salvo ainda. Faça um treino e toque em “Salvar treino”.</p>';
-  return head + ss.map(x => {
+  return head + '<p class="lph">Segure um treino para editar, retomar ou excluir.</p>' + ss.map(x => {
     const vol = x.items.reduce((a, i) => a + ev(i), 0);
     const prev = all.filter(y => y.day === x.day && y.d < x.d).pop();
     const pv = prev ? prev.items.reduce((a, i) => a + ev(i), 0) : 0;
@@ -137,12 +137,12 @@ function viewHist() {
     const dt = new Date(x.d + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
     const c = conf === 's' + x.id;
     const rcs = x.items.map(i => { const r = recordOf(i, all.filter(y => y.day === x.day && y.d < x.d).map(y => y.items.find(z => z.n === i.n)).filter(Boolean)); return r && Object.assign({ n: i.n }, r); }).filter(Boolean);
-    return `<article class="ss"><div class="sh"><b>${esc(x.day)}</b><span>${x.id === justSaved ? 'Salvo agora' : fd(x.d)}</span></div>
+    return `<article class="ss" data-lp data-lpid="ss${x.id}" data-lpt="${esc(x.day)} · ${fd(x.d)}"><div class="sh"><b>${esc(x.day)}</b><span>${x.id === justSaved ? 'Salvo agora' : fd(x.d)}</span></div>
       <p class="meta">${dt} · ${fmt(vol)} kg de volume${x.dur ? ' · ' + fmtDur(x.dur) : ''}${dl}</p>
       ${rcs.length ? `<p class="rcl">Recordes: ${rcs.map(r => esc(recLabel(r))).join(' · ')}</p>` : ''}
       <ul class="ll">${x.items.map(i => `<li><span>${esc(i.n)}</span><span>${fxs(i)}</span></li>`).join('')}</ul>
       ${rxHtml(x)}
-      <div class="acts2"><button class="lnk" data-act="hedit" data-sid="${x.id}">Editar</button><button class="lnk" data-act="hresume" data-sid="${x.id}">Retomar</button><button class="lnk" data-act="copy" data-sid="${x.id}">${copied === x.id ? 'Copiado!' : 'Copiar resumo'}</button><a class="lnk" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(sumText(x))}">WhatsApp</a><button class="lnk ${c ? 'sure' : ''}" data-act="dels" data-sid="${x.id}">${c ? 'Confirmar exclusão' : 'Excluir do histórico'}</button></div></article>`;
+      <div class="acts2"><button class="lnk" data-act="copy" data-sid="${x.id}">${copied === x.id ? 'Copiado!' : 'Copiar resumo'}</button><a class="lnk" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(sumText(x))}">WhatsApp</a></div><span class="lpa" hidden><button data-lpa data-lpl="Editar treino" data-act="hedit" data-sid="${x.id}"></button><button data-lpa data-lpl="Retomar treino" data-act="hresume" data-sid="${x.id}"></button><button data-lpa data-lpl="Excluir do histórico" data-lpd data-lpc data-act="dels" data-sid="${x.id}"></button></span></article>`;
   }).join('');
 }
 

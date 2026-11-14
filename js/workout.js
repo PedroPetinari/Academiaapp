@@ -59,7 +59,7 @@ function finishWorkout() {
     S.days.forEach(day => {
       if (day.check) return;
       let wrote = false;
-      day.ex.forEach(e => { const k = e.id + (pe === 'b' ? 'b' : ''); if (drafts[k] && touched[k] && logIt(e, pe, drafts[k], t)) wrote = true; });
+      day.ex.forEach(e => { const k = e.id + (pe === 'b' ? 'b' : ''); if (drafts[k] && touched[k] && logIt(e, pe, savable(e, pe), t)) wrote = true; });
       /* conta o que foi salvo agora ou durante este treino (uma sessão antiga do mesmo dia não vale) */
       const before = SS(pe).find(x => x.id === t + '|' + day.id), fresh = !wc && !!before && (!S.run || (before.ts || 0) >= S.run.at);
       if (!wrote && !fresh) return;

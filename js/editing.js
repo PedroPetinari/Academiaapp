@@ -2,7 +2,7 @@
 let workCtx = null, askEnd = null, histMsg = '';   /* workCtx = { d: data, who, day, resumed } enquanto edita um treino salvo */
 const curDate = () => workCtx ? workCtx.d : todayStr();
 const runElapsed = () => S.run ? (S.run.base || 0) + (Date.now() - S.run.at) / 1000 : 0;
-const clearDrafts = () => { drafts = {}; Object.keys(touched).forEach(k => delete touched[k]); };
+const clearDrafts = () => { drafts = {}; Object.keys(touched).forEach(k => delete touched[k]); Object.keys(okS).forEach(k => delete okS[k]); };
 
 /* há algo para salvar? (cargas preenchidas ou algo salvo durante este treino) */
 function hasWork() {

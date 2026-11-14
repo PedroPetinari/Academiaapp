@@ -58,11 +58,14 @@ function goalHtml() {
 
 /* ---------- cronômetro de descanso ---------- */
 let rtEnd = 0, rtTot = 0, rtTimer = null;
-function rtShow() { const el = document.getElementById('rt'); el.hidden = view !== 'treino' && !rtEnd; if (!rtEnd) rtDraw(); }
+/* o descanso aparece dentro do cartão do exercício (no Treino) ou como botão flutuante nas outras telas */
+const rtHost = () => { const i = document.getElementById('rtin'); return view === 'treino' && i ? i : document.getElementById('rt'); };
+function rtShow() { const el = document.getElementById('rt'), inl = view === 'treino' && document.getElementById('rtin'); el.hidden = !!inl || !rtEnd; rtDraw(); }
 function rtDraw() {
-  const el = document.getElementById('rt'), r = +S.cfg.rest || 90;
-  el.className = rtEnd ? 'rt run' : 'rt';
-  el.innerHTML = rtEnd ? '<span>Descanso</span><b id="rtt"></b><button data-act="rtadd" data-v="15">+15s</button><button class="stop" data-act="rtstop">Parar</button>' : '<button data-act="rtgo" data-v="' + r + '" aria-label="Iniciar descanso">' + r + 's</button>';
+  const el = rtHost(), r = +S.cfg.rest || 90, inl = el.id === 'rtin';
+  if (!inl) { document.getElementById('rt').className = rtEnd ? 'rt run' : 'rt'; if (!rtEnd) return; }
+  else el.className = 'rt inl' + (rtEnd ? ' run' : '');
+  el.innerHTML = rtEnd ? '<span>Descanso</span><b id="rtt"></b><button data-act="rtadd" data-v="15">+15s</button><button class="stop" data-act="rtstop">Parar</button>' : '<button data-act="rtgo" data-v="' + r + '" aria-label="Iniciar descanso de ' + r + ' segundos">Descanso ' + r + 's</button>';
   rtTick();
 }
 function rtTick() {
@@ -70,7 +73,7 @@ function rtTick() {
   const ms = rtEnd - Date.now(), left = Math.ceil(ms / 1000);
   if (left <= 0) { rtEnd = 0; clearInterval(rtTimer); beep(); rtShow(); return; }
   const t = document.getElementById('rtt'); if (t) t.textContent = String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0');
-  document.getElementById('rt').style.setProperty('--p', Math.min(100, Math.max(0, (1 - ms / rtTot) * 100)) + '%');
+  rtHost().style.setProperty('--p', Math.min(100, Math.max(0, (1 - ms / rtTot) * 100)) + '%');
 }
 function rtStart(sec) { rtTot = sec * 1000; rtEnd = Date.now() + rtTot; clearInterval(rtTimer); rtTimer = setInterval(rtTick, 250); rtDraw(); }
 function rtAct(a, v) { if (a === 'rtgo') rtStart(v); else if (a === 'rtadd') { rtEnd += v * 1000; rtTot += v * 1000; rtTick(); } else { rtEnd = 0; clearInterval(rtTimer); rtShow(); } }
@@ -85,7 +88,7 @@ function runDraw() {
   const el = document.getElementById('run'); if (!el) return;
   if (S.run) {
     el.hidden = false; el.className = 'run on';
-    const dy = S.days.find(d => d.id === S.active), tt = curDate(), segs = dy && !dy.check ? dy.ex.map(e => `<i class="${LG(e, who).some(x => x.d === tt) || (drafts[e.id + (who === 'b' ? 'b' : '')] && touched[e.id + (who === 'b' ? 'b' : '')]) ? 'on' : ''}"></i>`).join('') : '';
+    const dy = S.days.find(d => d.id === S.active), tt = curDate(), segs = dy && !dy.check ? dy.ex.map(e => `<i class="${LG(e, who).some(x => x.d === tt) ? 'on' : ''}"></i>`).join('') : '';
     el.innerHTML = '<div class="rtop"><div><span class="rl">Treinando' + (dy ? ' · ' + esc(dy.name) : '') + '</span><b id="runt">' + clock(runElapsed()) + '</b></div><button class="save off" data-act="runend">Encerrar</button></div>' + (segs ? '<div class="segs" aria-hidden="true">' + segs + '</div>' : '') + (runMsg ? '<p class="notice" role="status">' + esc(runMsg) + '</p>' : '');
     runMsg = '';
     if (!runTimer) runTimer = setInterval(runTick, 1000);
