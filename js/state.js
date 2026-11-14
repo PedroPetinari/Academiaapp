@@ -39,10 +39,10 @@ const persist = () => { saveLocal(); schedSync(); };
 
 let cheer = null, drafts = {}, conf = null, showNew = false, ptSlot = -1;
 
-let view = 'treino', cm = new Date(), sel = todayStr(), openP = null, photos = [];
+let view = 'hoje', cm = new Date(), sel = todayStr(), openP = null, photos = [];
 cm.setDate(1);
 
-let justSaved = '', notice = '', who = 'a', copied = '', dataMsg = '', editEx = null;
+let justSaved = '', notice = '', who = (() => { try { return localStorage.getItem('appgym-who') === 'b' ? 'b' : 'a'; } catch (e) { return 'a'; } })(), copied = '', dataMsg = '', editEx = null;
 const touched = {};
 
 let DB = null, ASSETS = null, others = {}, names = {}, pend = false;

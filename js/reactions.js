@@ -1,5 +1,9 @@
 /* Reações (emoji e comentário) nos treinos do histórico, e avisos quando o outro reage. */
-const RXE = ['💪', '🔥', '👏', '❤️', '😮'];
+/* reações: emojis que a pessoa escolhe para reagir (é o único lugar do app que usa emoji) */
+const RXE = ['\u{1F4AA}', '\u{1F525}', '\u{1F44F}', '\u2764\uFE0F', '\u{1F62E}', '\u{1F602}', '\u{1F64C}'];
+/* reações feitas por palavra numa versão de teste voltam a ser emoji */
+const RXBACK = { 'Forte': RXE[0], 'Mandou bem': RXE[1], 'Parabéns': RXE[2], 'Evolução': RXE[3], 'Uau': RXE[4] };
+const rxName = e => RXBACK[e] || e;
 let rxAs = '', toastT = null;
 const rxBy = () => rxAs || (who === 'a' ? 'b' : 'a');   /* por padrão, quem reage é a outra pessoa */
 const RXL = () => S.rx || (S.rx = []);
@@ -14,12 +18,13 @@ function rxSet(p, sid, by, patch) {
   S.rx = a;
 }
 
-function rxHtml(x) {
-  const by = rxBy(), mine = rxList(who, x.id).find(r => r.by === by) || { e: '', c: '' };
-  const list = rxList(who, x.id).map(r => `<p class="rxi"><b>${esc(N(r.by))}</b>${r.e ? ' <span class="rxe">' + r.e + '</span>' : ''}${r.c ? ' ' + esc(r.c) : ''}</p>`).join('');
+function rxHtml(x, p) {
+  p = p || who;
+  const by = rxBy(), mine = rxList(p, x.id).find(r => r.by === by) || { e: '', c: '' }, me = rxName(mine.e);
+  const list = rxList(p, x.id).map(r => `<p class="rxi"><b>${esc(N(r.by))}</b>${r.e ? ' <span class="rxe">' + esc(rxName(r.e)) + '</span>' : ''}${r.c ? ' ' + esc(r.c) : ''}</p>`).join('');
   return `<div class="rx">${list}<div class="rxbar"><span>Reagir como</span>${['a', 'b'].map(v => `<button class="${by === v ? 'on' : ''}" data-act="rxas" data-v="${v}">${esc(N(v))}</button>`).join('')}</div>
-    <div class="rxbar">${RXE.map(e => `<button class="rxb ${mine.e === e ? 'on' : ''}" data-act="rxe" data-sid="${x.id}" data-e="${e}" aria-label="Reagir com ${e}">${e}</button>`).join('')}</div>
-    <div class="rxc"><input class="rxin" data-sid="${x.id}" placeholder="Escreva um comentário" maxlength="140" value="${esc(mine.c)}" aria-label="Comentário"><button class="save" data-act="rxsend" data-sid="${x.id}">Enviar</button></div></div>`;
+    <div class="rxbar">${RXE.map(e => `<button class="rxb ${me === e ? 'on' : ''}" data-act="rxe" data-p="${p}" data-sid="${x.id}" data-e="${e}" aria-label="Reagir com ${e}">${e}</button>`).join('')}</div>
+    <div class="rxc"><input class="rxin" data-sid="${x.id}" placeholder="Escreva um comentário" maxlength="140" value="${esc(mine.c)}" aria-label="Comentário"><button class="save" data-act="rxsend" data-p="${p}" data-sid="${x.id}">Enviar</button></div></div>`;
 }
 
 /* aviso na tela (e notificação do aparelho, se permitida) */
@@ -28,9 +33,9 @@ function toast(msg) {
   el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 7000);
 }
 function rxAlert(x) {
-  const p = x.k[0], s = SS(p).find(y => y.id === x.k.slice(1));
-  const title = N(x.by) + ' reagiu ao treino' + (p !== x.by ? ' de ' + N(p) : '');
-  const body = (s ? s.day : 'Treino') + (x.e ? ' ' + x.e : '') + (x.c ? ': ' + x.c : '');
+  const p = x.k[0], ph = p === 'F', s = ph ? null : SS(p).find(y => y.id === x.k.slice(1));
+  const title = ph ? N(x.by) + ' reagiu a uma foto' : N(x.by) + ' reagiu ao treino' + (p !== x.by ? ' de ' + N(p) : '');
+  const body = (ph ? 'Foto' : s ? s.day : 'Treino') + (x.e ? ' · ' + rxName(x.e) : '') + (x.c ? ': ' + x.c : '');
   toast(title + ' · ' + body);
   try {
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.hidden) {

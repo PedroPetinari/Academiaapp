@@ -8,7 +8,10 @@ document.addEventListener('click', ev => {
   const t = curDate();
   if (act === 'tab') { if (workCtx) notice = 'Termine ou cancele a edição para trocar de treino.'; else S.active = b.dataset.id; }
   else if (act === 'newday') { showNew = true; }
-  else if (act === 'nav') { view = b.dataset.v; openP = null; showNew = false; justSaved = ''; }
+  else if (act === 'nav') { const v = b.dataset.v; view = v === 'agenda' ? lastAg : v === 'progresso' ? lastPg : v; openP = null; showNew = false; justSaved = ''; }
+  else if (act === 'hstart') { const d = suggestDay(who); if (d && !workCtx) { S.active = d.id; if (!S.run) S.run = { at: Date.now() }; } view = 'treino'; }
+  else if (act === 'hnext') { const D = trainDays(), c = suggestDay(who), i = D.findIndex(x => x.id === (c && c.id)); homeDay = D[(i + 1) % D.length].id; }
+  else if (act === 'gocal') { sel = b.dataset.d; cm = new Date(sel + 'T12:00:00'); view = 'cal'; calTab = 'dia'; }
   else if (act === 'usekg') { const pe = b.dataset.p === 'b' ? 'b' : 'a', k = ex.id + (pe === 'b' ? 'b' : ''), dr = drafts[k]; if (dr) { dr.kg = b.dataset.kg; touched[k] = true; } }
   else if (act === 'editex') { editEx = ex.id; }
   else if (act === 'cancelex') { editEx = null; }
@@ -20,7 +23,7 @@ document.addEventListener('click', ev => {
   }
   else if (act === 'addset') { const pe = b.dataset.p === 'b' ? 'b' : 'a', k = ex.id + (pe === 'b' ? 'b' : ''), dr = drafts[k]; if (dr) { (dr.x = dr.x || []).push({ kg: dr.kg, r: dr.r }); touched[k] = true; } }
   else if (act === 'delset') { const pe = b.dataset.p === 'b' ? 'b' : 'a', k = ex.id + (pe === 'b' ? 'b' : ''), dr = drafts[k]; if (dr && dr.x) { dr.x.splice(+b.dataset.i, 1); touched[k] = true; } }
-  else if (act === 'eye') { const i = document.getElementById('ccode'), show = i.type === 'password'; i.type = show ? 'text' : 'password'; b.textContent = show ? '🙈' : '👁'; return; }
+  else if (act === 'eye') { const i = document.getElementById('ccode'), show = i.type === 'password'; i.type = show ? 'text' : 'password'; b.textContent = show ? 'Ocultar' : 'Mostrar'; return; }
   else if (act === 'theme') { S.cfg.bgType = 'theme'; S.cfg.bgVal = b.dataset.k; S.cfg.accT = 1; S.cfg.acc = themeVars(b.dataset.k).acc; }
   else if (act === 'bgsolid') { S.cfg.bgType = 'solid'; S.cfg.bgVal = b.dataset.c; }
   else if (act === 'bgoff') { S.cfg.bgType = 'auto'; S.cfg.bgVal = ''; }
@@ -35,7 +38,7 @@ document.addEventListener('click', ev => {
   else if (act === 'export') { exportData(); }
   else if (act === 'import') { document.getElementById('bkp').click(); return; }
   else if (act === 'copy') { copySess(b.dataset.sid); }
-  else if (act === 'who') { who = b.dataset.v; }
+  else if (act === 'who') { who = b.dataset.v; try { localStorage.setItem('appgym-who', who); } catch (e) {} }
   else if (act === 'finish' || act === 'runend') { if (hasWork()) askEnd = act; else doFinish(act, prev); }
   else if (act === 'askno') { askEnd = null; }
   else if (act === 'askyes') { const a = askEnd || 'finish'; askEnd = null; doFinish(a, prev); }
@@ -58,8 +61,8 @@ document.addEventListener('click', ev => {
   else if (act === 'evadd') { agMsg = evAdd(); }
   else if (act === 'evdel') { const id = b.dataset.id; if (prev === 'v' + id) evDel(id); else conf = 'v' + id; }
   else if (act === 'rxas') { rxAs = b.dataset.v; }
-  else if (act === 'rxe') { const mine = rxList(who, b.dataset.sid).find(r => r.by === rxBy()); rxSet(who, b.dataset.sid, rxBy(), { e: mine && mine.e === b.dataset.e ? '' : b.dataset.e }); }
-  else if (act === 'rxsend') { const inp = b.closest('.rxc').querySelector('input'); rxSet(who, b.dataset.sid, rxBy(), { c: inp.value.trim() }); }
+  else if (act === 'rxe') { const pp = b.dataset.p || who, mine = rxList(pp, b.dataset.sid).find(r => r.by === rxBy()); rxSet(pp, b.dataset.sid, rxBy(), { e: mine && rxName(mine.e) === b.dataset.e ? '' : b.dataset.e }); }
+  else if (act === 'rxsend') { const inp = b.closest('.rxc').querySelector('input'); rxSet(b.dataset.p || who, b.dataset.sid, rxBy(), { c: inp.value.trim() }); }
   else if (act === 'notif') { try { Notification.requestPermission().then(() => render()); } catch (e) {} return; }
   else if (act === 'runstart') { S.run = { at: Date.now() }; }
   else if (act === 'ptpick') { ptSlot = +b.dataset.i; document.getElementById('ptfile').click(); return; }
@@ -143,11 +146,13 @@ document.addEventListener('change', async ev => {
   if (i === 'bex') { bodyEx = ev.target.value; render(); }
   if (i === 'bh') { render(); }
   if (i === 'bgfile') {
-    const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+    let f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+    f = await editPhoto(f); if (!f) return;
     try { const blob = await shrink(f, 1400), id = uid(); await tx('readwrite', s => s.put({ id, blob }), 'bg'); bgUrls[id] = URL.createObjectURL(blob); S.cfg.bgType = 'photo'; S.cfg.bgVal = id; saveLocal(); render(); } catch (e) {}
   }
   if (i === 'ptfile') {
-    const f = ev.target.files[0]; ev.target.value = ''; if (!f || ptSlot < 0 || !S.cfg.pt[ptSlot]) return;
+    let f = ev.target.files[0]; ev.target.value = ''; if (!f || ptSlot < 0 || !S.cfg.pt[ptSlot]) return;
+    f = await editPhoto(f); if (!f) return;
     try {
       const blob = await shrink(f, 1400), id = uid(), t = S.cfg.pt[ptSlot], old = t.id;
       await tx('readwrite', s => s.put({ id, blob }), 'bg'); bgUrls[id] = URL.createObjectURL(blob);
@@ -158,7 +163,8 @@ document.addEventListener('change', async ev => {
     } catch (e) {}
   }
   if (i === 'embfile') {
-    const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+    let f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+    f = await editPhoto(f, { png: true }); if (!f) return;
     try {
       const blob = await shrink(f, 720, 0.9, 'image/png'), id = uid(), old = S.cfg.embId;
       await tx('readwrite', s => s.put({ id, blob }), 'bg'); bgUrls[id] = URL.createObjectURL(blob);
@@ -175,7 +181,9 @@ document.addEventListener('change', async ev => {
   if (i === 'cap') { const p = photos && photos.find(x => x.id === openP); if (p) { p.cap = ev.target.value; p.capDirty = true; try { await tx('readwrite', s => s.put(p)); } catch (e) {} syncPhotos(true); } }
   if (i === 'file') {
     const fs = [...ev.target.files]; ev.target.value = '';
-    for (const f of fs) {
+    let n = 0;
+    for (let f of fs) {
+      n++; f = await editPhoto(f, { n, tot: fs.length }); if (!f) continue;
       try { const blob = await shrink(f, 1100, 0.72); await tx('readwrite', s => s.put({ id: uid(), blob, d: todayStr(), at: Date.now(), cap: '' })); } catch (e) {}
     }
     await loadPhotos(); render(); syncPhotos(true);

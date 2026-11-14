@@ -26,3 +26,16 @@ function topOf(x) {
   const kg = Math.max.apply(null, ss.map(o => o.kg)), at = ss.filter(o => o.kg === kg);
   return { kg, rs: at.map(o => o.r), n: at.length };
 }
+
+/* recordes batidos numa sessão salva (comparando com as sessões anteriores do mesmo treino) */
+function sessRecs(p, s) {
+  return s.items.map(i => {
+    const r = recordOf(i, SS(p).filter(y => y.day === s.day && y.d < s.d).map(y => y.items.find(z => z.n === i.n)).filter(Boolean));
+    return r && Object.assign({ n: i.n, d: s.d }, r);
+  }).filter(Boolean);
+}
+/* quantos recordes a pessoa bateu nesta semana */
+function weekRecords(p) {
+  const w = weekKey(todayStr());
+  return SS(p).filter(s => s.d >= w).reduce((a, s) => a + sessRecs(p, s).reduce((b, r) => b + recMarks(r), 0), 0);
+}

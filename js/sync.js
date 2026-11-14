@@ -96,7 +96,7 @@ function cloudMsg() {
 
 /* ---------- fotos na nuvem ---------- */
 const PH = { busy: false, status: '', last: 0 };
-const photoHint = () => '<p class="dv">' + (sbOn() ? 'Fotos compartilhadas com a nuvem' + (PH.status ? ' · ' + PH.status : '') : 'Fotos só neste aparelho. Ative a sincronização em Estilo.') + '</p>';
+const photoHint = () => '<p class="dv">' + (sbOn() ? 'Fotos compartilhadas com a nuvem' + (PH.status ? ' · ' + PH.status : '') : 'Fotos só neste aparelho. Ative a sincronização em Ajustes.') + '</p>';
 const blobToData = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
 async function syncPhotos(force) {
   if (!sbOn() || PH.busy || (!force && Date.now() - PH.last < 25000)) return;

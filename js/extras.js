@@ -9,7 +9,7 @@ function exportData() {
 }
 function sumText(x) {
   const v = x.items.reduce((a, i) => a + ev(i), 0);
-  return '🏋️ ' + x.day + ' · ' + fd(x.d) + ' (' + N(who) + ')\n' + x.items.map(i => '• ' + i.n + ': ' + fxs(i)).join('\n') + '\nVolume: ' + fmt(v) + ' kg' + (x.dur ? '\nTempo: ' + fmtDur(x.dur) : '');
+  return x.day + ' · ' + fd(x.d) + ' (' + N(who) + ')\n' + x.items.map(i => '• ' + i.n + ': ' + fxs(i)).join('\n') + '\nVolume: ' + fmt(v) + ' kg' + (x.dur ? '\nTempo: ' + fmtDur(x.dur) : '');
 }
 function copySess(sid) {
   const x = SS(who).find(y => y.id === sid); if (!x) return;
@@ -33,7 +33,7 @@ function sugBox(e, p, L) {
   else if (best < T.lo && pv && Math.max.apply(null, pv.rs) < T.lo && pv.kg >= tp.kg) { kg = Math.max(0, tp.kg - inc); txt = 'Duas vezes abaixo de ' + T.lo + ' reps. Reduza para <b>' + fmt(kg) + ' kg</b> e reconstrua.'; }
   else if (best < T.lo) txt = 'Ficou abaixo de ' + T.lo + ' reps. Mantenha <b>' + fmt(tp.kg) + ' kg</b> e busque chegar a ' + T.lo + '.';
   else txt = 'Mantenha <b>' + fmt(tp.kg) + ' kg</b> e tente +1 rep por série (meta: ' + T.hi + ').';
-  return '<div class="sugb"><span>📈 ' + txt + '</span>' + (kg !== null ? '<button class="lnk" data-act="usekg" data-p="' + p + '" data-kg="' + kg + '">Usar ' + fmt(kg) + ' kg</button>' : '') + '</div>';
+  return '<div class="sugb"><span>' + txt + '</span>' + (kg !== null ? '<button class="lnk" data-act="usekg" data-p="' + p + '" data-kg="' + kg + '">Usar ' + fmt(kg) + ' kg</button>' : '') + '</div>';
 }
 function weekKey(d) { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x.toLocaleDateString('sv'); }
 function goalInfo(p) {
@@ -53,7 +53,7 @@ function goalInfo(p) {
 }
 function goalHtml() {
   const g = goalInfo(who), dots = Array.from({ length: g.g }, (_, i) => '<i class="' + (i < g.n ? 'f' : '') + '"></i>').join('');
-  return '<p class="goal"><b>Meta da semana</b> ' + dots + ' ' + g.n + '/' + g.g + (g.off ? ' (' + g.off + ' dia' + (g.off === 1 ? '' : 's') + ' de pausa)' : '') + ' · 🔥 ' + g.streak + ' semana' + (g.streak === 1 ? '' : 's') + ' seguida' + (g.streak === 1 ? '' : 's') + '</p>';
+  return '<p class="goal"><b>Meta da semana</b> ' + dots + ' ' + g.n + '/' + g.g + (g.off ? ' (' + g.off + ' dia' + (g.off === 1 ? '' : 's') + ' de pausa)' : '') + ' · ' + g.streak + ' semana' + (g.streak === 1 ? '' : 's') + ' seguida' + (g.streak === 1 ? '' : 's') + '</p>';
 }
 
 /* ---------- cronômetro de descanso ---------- */
@@ -62,7 +62,7 @@ function rtShow() { const el = document.getElementById('rt'); el.hidden = view !
 function rtDraw() {
   const el = document.getElementById('rt'), r = +S.cfg.rest || 90;
   el.className = rtEnd ? 'rt run' : 'rt';
-  el.innerHTML = rtEnd ? '<span>Descanso</span><b id="rtt"></b><button data-act="rtadd" data-v="15">+15s</button><button class="stop" data-act="rtstop">Parar</button>' : '<button data-act="rtgo" data-v="' + r + '" aria-label="Iniciar descanso">⏱ ' + r + 's</button>';
+  el.innerHTML = rtEnd ? '<span>Descanso</span><b id="rtt"></b><button data-act="rtadd" data-v="15">+15s</button><button class="stop" data-act="rtstop">Parar</button>' : '<button data-act="rtgo" data-v="' + r + '" aria-label="Iniciar descanso">' + r + 's</button>';
   rtTick();
 }
 function rtTick() {
@@ -85,14 +85,15 @@ function runDraw() {
   const el = document.getElementById('run'); if (!el) return;
   if (S.run) {
     el.hidden = false; el.className = 'run on';
-    el.innerHTML = '<span class="rl">Treinando</span><b id="runt">' + clock(runElapsed()) + '</b><button class="save off" data-act="runend">■ Encerrar treino</button>' + (runMsg ? '<p class="notice" role="status">' + esc(runMsg) + '</p>' : '');
+    const dy = S.days.find(d => d.id === S.active), tt = curDate(), segs = dy && !dy.check ? dy.ex.map(e => `<i class="${LG(e, who).some(x => x.d === tt) || (drafts[e.id + (who === 'b' ? 'b' : '')] && touched[e.id + (who === 'b' ? 'b' : '')]) ? 'on' : ''}"></i>`).join('') : '';
+    el.innerHTML = '<div class="rtop"><div><span class="rl">Treinando' + (dy ? ' · ' + esc(dy.name) : '') + '</span><b id="runt">' + clock(runElapsed()) + '</b></div><button class="save off" data-act="runend">Encerrar</button></div>' + (segs ? '<div class="segs" aria-hidden="true">' + segs + '</div>' : '') + (runMsg ? '<p class="notice" role="status">' + esc(runMsg) + '</p>' : '');
     runMsg = '';
     if (!runTimer) runTimer = setInterval(runTick, 1000);
   } else {
     clearInterval(runTimer); runTimer = null;
     if (view !== 'treino' || workCtx) { el.hidden = true; el.innerHTML = ''; return; }
     el.hidden = false; el.className = 'run';
-    el.innerHTML = '<button class="save wide" data-act="runstart">▶ Iniciar treino</button>';
+    el.innerHTML = '<button class="save wide" data-act="runstart">Iniciar treino</button>';
   }
 }
 function runTick() { const t = document.getElementById('runt'); if (S.run && t) t.textContent = clock(runElapsed()); }

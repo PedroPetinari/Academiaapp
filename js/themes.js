@@ -88,6 +88,16 @@ function applyBg() {
 /* miniatura do botão de tema (Estilo): degradê + emblema */
 function thumbBg(k) { return 'url("' + embUrl(k) + '") right 12px center/auto 80% no-repeat,' + (wantDark() ? THEMES[k].fx : THEMES[k].lfx); }
 
+/* cor da segunda pessoa: mesma força do destaque, com o tom girado para combinar com o tema */
+function pairOf(h, dark) {
+  const n = parseInt(h.slice(1), 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let hu = 0; if (d) hu = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  hu = (hu * 60 + 360 + 150) % 360;
+  const L = mx + mn ? (mx + mn) / 2 : 0, S0 = d ? d / (1 - Math.abs(2 * L - 1)) : 0, sat = Math.max(0.55, Math.min(0.85, S0)), li = dark ? 0.68 : 0.42;
+  const c = (1 - Math.abs(2 * li - 1)) * sat, x = c * (1 - Math.abs((hu / 60) % 2 - 1)), m = li - c / 2;
+  const [rr, gg, bb] = hu < 60 ? [c, x, 0] : hu < 120 ? [x, c, 0] : hu < 180 ? [0, c, x] : hu < 240 ? [0, x, c] : hu < 300 ? [x, 0, c] : [c, 0, x];
+  return '#' + [rr, gg, bb].map(v => ('0' + Math.round((v + m) * 255).toString(16)).slice(-2)).join('');
+}
 function applyCfg() {
   const c = S.cfg, r = document.documentElement;
   const bg = applyBg();
@@ -95,13 +105,14 @@ function applyCfg() {
   if (!bg.acc && bg.dark && String(acc).toLowerCase() === DEF.acc.toLowerCase()) acc = '#3CC5A0';
   const n = parseInt(acc.slice(1), 16), L = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
   r.style.setProperty('--acc', acc);
+  r.style.setProperty('--acc2', pairOf(acc, bg.dark));
   r.style.setProperty('--acc-ink', L > 0.6 ? '#0B1511' : '#FFFFFF');
   r.style.setProperty('--soft', 'color-mix(in srgb, ' + acc + ' 16%, var(--surface))');
   if (bg.vars) r.setAttribute('data-theme', bg.dark ? 'dark' : 'light'); else if (c.mode === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', c.mode);
   r.dataset.font = c.font || 'cond'; r.dataset.lay = 'cards'; r.dataset.den = 'cozy';
   document.getElementById('appn').textContent = c.name || 'AppGym';
   document.title = c.name || 'AppGym';
-  document.getElementById('foot').textContent = sbOn() ? 'Sincronizado com a nuvem pelo código. Treinos e fotos são compartilhados.' : 'Os registros ficam salvos neste navegador. Para usar em dois aparelhos, ative a sincronização em Estilo.';
+  document.getElementById('foot').textContent = sbOn() ? 'Sincronizado com a nuvem pelo código. Treinos e fotos são compartilhados.' : 'Os registros ficam salvos neste navegador. Para usar em dois aparelhos, ative a sincronização em Ajustes.';
 }
 
 /* o emblema próprio (imagem) ainda é usado pelo tema atual ou por algum tema salvo? */
